@@ -1,69 +1,52 @@
 #include <iostream>
-#include <vector>
-#include <thread>
+#include <string>
+#include <fstream>
 #include <memory>
-#include "lodepng.h"
+#include <chrono>
+#include <regex>
 
 // Build with g++ main.cpp lodepng.cpp -std=c++11
+static constexpr char* versionString = "0.1";
 
-class RGBA // TODO: Support BBC micro colours (i.e red/white/black/cyan/magenta etc) as constants
+void displayUsage()
 {
-public:
-  enum class BBCColour : uint32_t
-  {
-    Black = 0x00,
-    White = 0xffffff
-  };
+	std::cout << "png2bbc (version " << versionString << ")" << std::endl;
+	std::cout << "A utility to create BBC micro sprites from PNG images" << std::endl << std::endl;
+	std::cout << "Usage: png2bbc <scriptfile>" << std::endl;
+}
 
-  RGBA() {}
-  RGBA(const BBCColour&) {}
-  RGBA(uint32_t rawRGBA) {}
-  RGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a=0xff) {}
-  ~RGBA() {}
-
-public:
-  bool isValidBBCColour() const { return true; }
-};
-
-class Image
+void processScript(const std::string& filename)
 {
-public:
-  Image(const char* filename) : m_width(0), m_height(0), m_errorCode(-1)
-  {
-    m_errorCode = lodepng::decode(m_pixels, m_width, m_height, filename);
-  }
-  Image() = delete;
-  ~Image() {}
+	std::fstream in(filename, std::ios::in);
 
-public:
-  bool isValid() const { return (m_errorCode==0); }
-  RGBA getPixel(uint32_t x, uint32_t y) const {RGBA thisPixel; return thisPixel;}
-  void setPixel(uint32_t x, uint32_t y, RGBA newPixel) {}
-  uint32_t getWidth() const { return m_width; }
-  uint32_t getHeight() const { return m_height; }
+	if (in.good())
+	{
+		std::string line;
 
-protected:
-  uint32_t m_width;
-  uint32_t m_height;
-  uint32_t m_errorCode;
-
-  // Pixels are 4 bytes per pixel, ordered RGBARGBA
-  std::vector<unsigned char> m_pixels;
-};
-
+		while (std::getline(in, line))
+		{
+			// WITH-IMAGE "image.png" CREATE-SPRITES <filename> <0-7> <x> <y> <w> <h> <num-frames> [row/col pixel-style]
+			// std::regex r()
+			// if (r.matches()
+			//  Image i; etc
+		}
+	}
+}
 
 int main(int argc, char** argv)
 {
-  Image theImage("file.png");
+	// We currently only accept one argument, the script file
+	if (argc==2)
+	{
+		std::string filename	= argv[1];
+		auto startTime			= std::chrono::steady_clock::now();
 
-  if (theImage.isValid())
-    {
-      std::cout << "Dimensions: " << theImage.getWidth() << "," << theImage.getHeight() << std::endl;
-    }
-  else
-    {
-      std::cout << "Failed to load png" << std::endl;
-    }
+		processScript(filename);
+	}
+	else
+	{
+		displayUsage();
+	}
   
   return 1;
 }
