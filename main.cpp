@@ -6,7 +6,7 @@
 #include <regex>
 
 // Build with g++ main.cpp lodepng.cpp -std=c++11
-static constexpr char* versionString = "0.1";
+static constexpr char versionString[] = "0.1";
 
 void displayUsage()
 {

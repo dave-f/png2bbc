@@ -12,7 +12,7 @@ public:
 	{
 		if (lodepng::decode(m_pixels, m_width, m_height, filename) != 0)
 		{
-			throw std::exception("Bad Image");
+			throw std::runtime_error("Bad Image");
 		}
 	}
 	Image() = delete;
