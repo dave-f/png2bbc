@@ -5,7 +5,9 @@
 #include <chrono>
 #include <regex>
 
-// Build with g++ main.cpp lodepng.cpp -std=c++11
+#include "Image.h"
+
+// Build on g++ with -std=c++11
 static constexpr char versionString[] = "0.1";
 
 void displayUsage()
@@ -15,33 +17,70 @@ void displayUsage()
 	std::cout << "Usage: png2bbc <scriptfile>" << std::endl;
 }
 
-void processScript(const std::string& filename)
+void processItem(const std::string& imageFile, uint32_t mode, const std::string& binFile, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numFrames)
 {
-	std::fstream in(filename, std::ios::in);
+	Image theImage(imageFile);
+}
 
-	if (in.good())
+bool processScript(const std::string& filename)
+{
+	bool r(false);
+	std::fstream in;
+	in.exceptions(std::fstream::failbit | std::fstream::badbit);
+
+	try
 	{
-		std::string line;
+		in.open(filename, std::ios::in);
 
-		while (std::getline(in, line))
+		std::string currentLine;
+
+		// WITH-IMAGE <pngfile> USING-MODE <0-7> CREATE-FILE <filename> FROM-DATA <x> <y> <w> <h> <num-frames> [row/col pixel-style]
+		std::regex r(R"([[:space:]]*WITH-IMAGE[[:space:]]+([^[:space:]]+)[[:space:]]+USING-MODE[[:space:]]+([0-7])[[:space:]]+CREATE-FILE[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA.*)");
+		std::smatch m;
+
+		while (!in.eof() && std::getline(in, currentLine))
 		{
-			// WITH-IMAGE "image.png" CREATE-SPRITES <filename> <0-7> <x> <y> <w> <h> <num-frames> [row/col pixel-style]
-			// std::regex r()
-			// if (r.matches()
-			//  Image i; etc
+			if (std::regex_match(currentLine,m,r))
+			{
+				auto imageFile	= m[1].str();
+				auto mode		= m[2].str();
+				auto binFile	= m[3].str();
+				uint32_t x = 0;
+				uint32_t y = 0;
+				uint32_t w = 0;
+				uint32_t h = 0;
+				uint32_t numFrames = 0;
+				processItem(imageFile, 2, binFile, x, y, w, h, numFrames);
+			}
 		}
+
+		in.close();
 	}
+	catch (const std::exception&)
+	{
+		r = false;
+	}
+
+	return r;
 }
 
 int main(int argc, char** argv)
 {
-	// We currently only accept one argument, the script file
+	// We currently only accept one argument; the script file
 	if (argc==2)
 	{
 		std::string filename	= argv[1];
 		auto startTime			= std::chrono::steady_clock::now();
 
-		processScript(filename);
+		if (processScript(filename))
+		{
+			auto msTaken = std::chrono::duration_cast<std::chrono::milliseconds>(startTime - std::chrono::steady_clock::now()).count();
+			std::cout << "Finished in " << msTaken << "ms";
+		}
+		else
+		{
+			std::cout << "Error processing" << std::endl;
+		}
 	}
 	else
 	{
