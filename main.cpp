@@ -20,6 +20,36 @@ void displayUsage()
 void processItem(const std::string& imageFile, uint32_t mode, const std::string& binFile, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numFrames)
 {
 	Image theImage(imageFile);
+	std::fstream outFile(binFile, std::ios::out | std::ios::binary);
+	outFile.exceptions(std::fstream::failbit | std::fstream::badbit);
+
+	uint32_t currentX = x;
+	ScreenByte currentByte(mode);
+	auto ppb = currentByte.getPixelsPerByte();
+
+	// TODO: check width is divisible by ppb
+
+	for (uint32_t k = 0; k<numFrames; ++k)
+	{
+		for (uint32_t j = y; j < y + h; ++j)
+		{
+			for (uint32_t i = x; i < x + w; ++i)
+			{
+				auto thisPixel = theImage.getPixel(x, y);
+
+				if (currentByte.addPixel(thisPixel))
+				{
+					auto theByte = currentByte.getByte();
+
+					outFile.write(reinterpret_cast<const char*>(&theByte), 1);
+				}
+			}
+		}
+
+		currentX += w;
+	}
+
+	outFile.close();
 }
 
 bool processScript(const std::string& filename)
@@ -31,7 +61,6 @@ bool processScript(const std::string& filename)
 	try
 	{
 		in.open(filename, std::ios::in);
-
 		std::string currentLine;
 
 		// WITH-IMAGE <pngfile> USING-MODE <0-7> CREATE-FILE <filename> FROM-DATA <x> <y> <w> <h> <num-frames> [row/col pixel-style]
@@ -43,14 +72,15 @@ bool processScript(const std::string& filename)
 			if (std::regex_match(currentLine,m,r))
 			{
 				auto imageFile	= m[1].str();
-				auto mode		= m[2].str();
+				auto mode		= std::stoi(m[2].str());
 				auto binFile	= m[3].str();
-				uint32_t x = 0;
-				uint32_t y = 0;
-				uint32_t w = 0;
-				uint32_t h = 0;
-				uint32_t numFrames = 0;
-				processItem(imageFile, 2, binFile, x, y, w, h, numFrames);
+				uint32_t x		= 0;
+				uint32_t y		= 0;
+				uint32_t w		= 0;
+				uint32_t h		= 0;
+				uint32_t frames = 0;
+
+				processItem(imageFile, mode, binFile, x, y, w, h, frames);
 			}
 		}
 
