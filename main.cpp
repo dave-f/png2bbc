@@ -35,7 +35,7 @@ void processItem(const std::string& imageFile, uint32_t mode, const std::string&
 		{
 			for (uint32_t i = x; i < x + w; ++i)
 			{
-				auto thisPixel = theImage.getPixel(x, y);
+				auto thisPixel = theImage.getPixel(i, j);
 
 				if (currentByte.addPixel(thisPixel))
 				{
