@@ -76,9 +76,9 @@ bool processScript(const std::string& filename)
 				auto binFile	= m[3].str();
 				uint32_t x		= 0;
 				uint32_t y		= 0;
-				uint32_t w		= 0;
-				uint32_t h		= 0;
-				uint32_t frames = 0;
+				uint32_t w		= 8;
+				uint32_t h		= 8;
+				uint32_t frames = 1;
 
 				processItem(imageFile, mode, binFile, x, y, w, h, frames);
 			}

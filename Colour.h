@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
 
 class Colour
 {
@@ -17,11 +18,14 @@ public:
 		White	= 0xffffff,
 	};
 
-	Colour() {}
-	Colour(const BBCColour&) {}
-	Colour(uint32_t rawRGBA) {}
-	Colour(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xff) {}
+	Colour() = delete;
+	Colour(const BBCColour&) = delete;
+	Colour(uint32_t rawRGBA) = delete;
+	Colour(uint8_t r, uint8_t g, uint8_t b);
 	~Colour() {}
+
+	static std::map<uint32_t, BBCColour> m_colourMap;
+	BBCColour m_thisColour;
 };
 
 class ScreenByte

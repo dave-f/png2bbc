@@ -19,7 +19,7 @@ public:
 	~Image() {}
 
 public:
-	Colour		getPixel(uint32_t x, uint32_t y) const { Colour thisPixel; return thisPixel; }
+	Colour		getPixel(uint32_t x, uint32_t y) const;
 	void		setPixel(uint32_t x, uint32_t y, Colour newPixel) {}
 	uint32_t	getWidth() const { return m_width; }
 	uint32_t	getHeight() const { return m_height; }
