@@ -56,6 +56,8 @@ bool processScript(const std::string& filename)
 	std::fstream in;
 	in.exceptions(std::fstream::badbit);
 
+	std::map<Colour::BBCColour, uint8_t> defaultColours = { {Colour::BBCColour::Black,0 }, {Colour::BBCColour::Red,1} }; //etc
+
 	try
 	{
 		in.open(filename, std::ios::in);
@@ -63,7 +65,7 @@ bool processScript(const std::string& filename)
 
 		std::shared_ptr<Image> currentImage;
 		int8_t currentMode(-1);
-		//std::shared_ptr<std::map<uint8_t,uint32_t>> currentColours;
+		std::shared_ptr<std::map<Colour::BBCColour, uint8_t>> currentColours = std::make_shared<std::map<Colour::BBCColour, uint8_t>>(defaultColours);
 
 		// MODE <0-7>
 		std::regex rxModeCommand(R"([[:space:]]*MODE[[:space:]]+([0-7]).*)");
@@ -85,7 +87,7 @@ bool processScript(const std::string& filename)
 			}
 			else if (std::regex_match(currentLine,m,rxColoursCommand))
 			{
-				// Set current palette
+				// TODO: Set current palette
 			}
 			else if (std::regex_match(currentLine,m,rxImageCommand))
 			{
@@ -101,7 +103,7 @@ bool processScript(const std::string& filename)
 				uint32_t h		= std::stoi(m[5].str());
 				uint32_t frames = std::stoi(m[6].str());
 
-				processItem(currentImage, currentMode, outputFile, x, y, w, h, frames);
+				processItem(currentImage, currentMode, /* currentColours */ outputFile, x, y, w, h, frames);
 			}
 		}
 
