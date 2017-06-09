@@ -35,11 +35,34 @@ public:
 	ScreenByte() = delete;
 	~ScreenByte() {}
 
+	// This checks the colour passed in
+	uint8_t getPixelMask(const Colour& pixelColour)
+	{
+		return 0;
+	}
+
 	bool addPixel(const Colour& pixelColour)
 	{
-		// or in at appropriate place, inc offset
-		++m_offset;
-		return m_offset == getPixelsPerByte();
+		switch (m_mode)
+		{
+		case 2:
+			break;
+
+		case 5:
+			auto mask = getPixelMask(pixelColour);
+			// uint8_t mask = 0b11 << m_offset;
+			break;
+		}
+
+		if (++m_offset == getPixelsPerByte())
+		{
+			m_offset = 0;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	uint8_t getByte() const
@@ -66,6 +89,8 @@ public:
 	}
 
 private:
+	static std::map<Colour::BBCColour,uint8_t> m_pop;
+
 	uint8_t m_byte;
 	uint32_t m_offset;
 	uint32_t m_mode;

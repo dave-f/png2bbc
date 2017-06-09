@@ -1,4 +1,11 @@
-; Usage: WITH-IMAGE <input png> USING-MODE <0-7> CREATE-FILE "out.bin" FROM-DATA x y w h num_sprites [PIXEL-ORDER n]
+; Script
+; ------
+; MODE <0-7> 
+; COLOURS <NAME>=<PIXEL>[,...]
+; IMAGE <file.png>
+; CREATE-FILE "out.bin" FROM-DATA x y w h num_sprites [PIXEL-ORDER n]
 
-WITH-IMAGE tile.png USING-MODE 5 CREATE-FILE aliens.bin FROM-DATA 0 0 16 16 1
-WITH-IMAGE tile.png USING-MODE 5 CREATE-FILE player.bin FROM-DATA 0 16 16 16 6
+MODE 5 
+COLOURS BLACK=0, WHITE=1, RED=2, BLUE=3
+IMAGE til2e.png
+CREATE-FILE aliens.bin FROM-DATA 0 16 16 16 1

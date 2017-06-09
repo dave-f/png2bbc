@@ -17,17 +17,15 @@ void displayUsage()
 	std::cout << "Usage: png2bbc <scriptfile>" << std::endl;
 }
 
-void processItem(const std::string& imageFile, uint32_t mode, const std::string& binFile, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numFrames)
+void processItem(const std::shared_ptr<Image> theImage, uint32_t mode, const std::string& binFile, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numFrames)
 {
-	Image theImage(imageFile);
 	std::fstream outFile(binFile, std::ios::out | std::ios::binary);
 	outFile.exceptions(std::fstream::failbit | std::fstream::badbit);
 
+	// TODO: check width is divisible by ppb
 	uint32_t currentX = x;
 	ScreenByte currentByte(mode);
 	auto ppb = currentByte.getPixelsPerByte();
-
-	// TODO: check width is divisible by ppb
 
 	for (uint32_t k = 0; k<numFrames; ++k)
 	{
@@ -35,7 +33,7 @@ void processItem(const std::string& imageFile, uint32_t mode, const std::string&
 		{
 			for (uint32_t i = x; i < x + w; ++i)
 			{
-				auto thisPixel = theImage.getPixel(i, j);
+				auto thisPixel = theImage->getPixel(i, j);
 
 				if (currentByte.addPixel(thisPixel))
 				{
@@ -56,31 +54,54 @@ bool processScript(const std::string& filename)
 {
 	bool r(false);
 	std::fstream in;
-	in.exceptions(std::fstream::failbit | std::fstream::badbit);
+	in.exceptions(std::fstream::badbit);
 
 	try
 	{
 		in.open(filename, std::ios::in);
 		std::string currentLine;
 
-		// WITH-IMAGE <pngfile> USING-MODE <0-7> CREATE-FILE <filename> FROM-DATA <x> <y> <w> <h> <num-frames> [row/col pixel-style]
-		std::regex r(R"([[:space:]]*WITH-IMAGE[[:space:]]+([^[:space:]]+)[[:space:]]+USING-MODE[[:space:]]+([0-7])[[:space:]]+CREATE-FILE[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA.*)");
-		std::smatch m;
+		std::shared_ptr<Image> currentImage;
+		int8_t currentMode(-1);
+		//std::shared_ptr<std::map<uint8_t,uint32_t>> currentColours;
+
+		// MODE <0-7>
+		std::regex rxModeCommand(R"([[:space:]]*MODE[[:space:]]+([0-7]).*)");
+		// COLOURS <name>=<0..15>[,...]
+		std::regex rxColoursCommand(R"([[:space:]]*COLOURS.*)");
+		// IMAGE <filename>
+		std::regex rxImageCommand(R"([[:space:]]*IMAGE[[:space:]]+([^[:space:]]+).*)");
+		// CREATE-FILE <filename> FROM-DATA <x> <y> <w> <h> <num-frames> [row/col pixel-style]
+		std::regex rxCreateCommand(R"([[:space:]]*CREATE-FILE[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+).*)");
 
 		while (!in.eof() && std::getline(in, currentLine))
 		{
-			if (std::regex_match(currentLine,m,r))
-			{
-				auto imageFile	= m[1].str();
-				auto mode		= std::stoi(m[2].str());
-				auto binFile	= m[3].str();
-				uint32_t x		= 0;
-				uint32_t y		= 0;
-				uint32_t w		= 8;
-				uint32_t h		= 8;
-				uint32_t frames = 1;
+			std::smatch m;
 
-				processItem(imageFile, mode, binFile, x, y, w, h, frames);
+			if (std::regex_match(currentLine,m,rxModeCommand))
+			{
+				// Set current mode
+				currentMode = std::stoi(m[1].str());
+			}
+			else if (std::regex_match(currentLine,m,rxColoursCommand))
+			{
+				// Set current palette
+			}
+			else if (std::regex_match(currentLine,m,rxImageCommand))
+			{
+				// Set current image
+				currentImage = std::make_shared<Image>(m[1].str());
+			}
+			else if (std::regex_match(currentLine,m,rxCreateCommand))
+			{
+				auto outputFile	= m[1].str();
+				uint32_t x		= std::stoi(m[2].str());
+				uint32_t y		= std::stoi(m[3].str());
+				uint32_t w		= std::stoi(m[4].str());
+				uint32_t h		= std::stoi(m[5].str());
+				uint32_t frames = std::stoi(m[6].str());
+
+				processItem(currentImage, currentMode, outputFile, x, y, w, h, frames);
 			}
 		}
 
