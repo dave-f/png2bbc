@@ -17,7 +17,7 @@ void displayUsage()
 	std::cout << "Usage: png2bbc <scriptfile>" << std::endl;
 }
 
-void processItem(const std::shared_ptr<Image> theImage, uint32_t mode, const std::string& binFile, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numFrames)
+void processItem(const std::shared_ptr<Image> theImage, uint32_t mode, std::shared_ptr<std::vector<Colour>> theColours, const std::string& binFile, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numFrames)
 {
 	std::fstream outFile(binFile, std::ios::out | std::ios::binary);
 	outFile.exceptions(std::fstream::failbit | std::fstream::badbit);
@@ -35,7 +35,20 @@ void processItem(const std::shared_ptr<Image> theImage, uint32_t mode, const std
 			{
 				auto thisPixel = theImage->getPixel(i, j);
 
-				if (currentByte.addPixel(thisPixel))
+				// The colour must be expected
+				auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
+				ptrdiff_t s;
+
+				if (it != theColours->end())
+				{
+					s = std::distance(theColours->begin(), it);
+				}
+				else
+				{
+					throw std::runtime_error("Unsupported colour");
+				}
+
+				if (currentByte.addPixel(s))
 				{
 					auto theByte = currentByte.getByte();
 
@@ -53,19 +66,26 @@ void processItem(const std::shared_ptr<Image> theImage, uint32_t mode, const std
 bool processScript(const std::string& filename)
 {
 	bool r(false);
+	uint32_t currentLineNumber = 0;
 	std::fstream in;
 	in.exceptions(std::fstream::badbit);
 
-	std::map<Colour::BBCColour, uint8_t> defaultColours = { {Colour::BBCColour::Black,0 }, {Colour::BBCColour::Red,1} }; //etc
+	// Which colours we permit
+	std::vector<Colour> defaultColours = { Colour::BBCColour::Black, Colour::BBCColour::Red, Colour::BBCColour::Green, Colour::BBCColour::Yellow };
 
 	try
 	{
 		in.open(filename, std::ios::in);
-		std::string currentLine;
 
+		if (!in.good())
+		{
+			throw std::runtime_error("Cannot open script file");
+		}
+
+		std::string currentLine;
 		std::shared_ptr<Image> currentImage;
 		int8_t currentMode(-1);
-		std::shared_ptr<std::map<Colour::BBCColour, uint8_t>> currentColours = std::make_shared<std::map<Colour::BBCColour, uint8_t>>(defaultColours);
+		std::shared_ptr<std::vector<Colour>> currentColours = std::make_shared<std::vector<Colour>>(defaultColours);
 
 		// MODE <0-7>
 		std::regex rxModeCommand(R"([[:space:]]*MODE[[:space:]]+([0-7]).*)");
@@ -78,11 +98,11 @@ bool processScript(const std::string& filename)
 
 		while (!in.eof() && std::getline(in, currentLine))
 		{
+			++currentLineNumber;
 			std::smatch m;
 
 			if (std::regex_match(currentLine,m,rxModeCommand))
 			{
-				// Set current mode
 				currentMode = std::stoi(m[1].str());
 			}
 			else if (std::regex_match(currentLine,m,rxColoursCommand))
@@ -91,11 +111,25 @@ bool processScript(const std::string& filename)
 			}
 			else if (std::regex_match(currentLine,m,rxImageCommand))
 			{
-				// Set current image
 				currentImage = std::make_shared<Image>(m[1].str());
 			}
 			else if (std::regex_match(currentLine,m,rxCreateCommand))
 			{
+				if (currentMode==-1)
+				{
+					throw std::runtime_error("No mode set");
+				}
+
+				if (!currentColours)
+				{
+					throw std::runtime_error("No palette set");
+				}
+
+				if (!currentImage)
+				{
+					throw std::runtime_error("No image set");
+				}
+
 				auto outputFile	= m[1].str();
 				uint32_t x		= std::stoi(m[2].str());
 				uint32_t y		= std::stoi(m[3].str());
@@ -103,14 +137,24 @@ bool processScript(const std::string& filename)
 				uint32_t h		= std::stoi(m[5].str());
 				uint32_t frames = std::stoi(m[6].str());
 
-				processItem(currentImage, currentMode, /* currentColours */ outputFile, x, y, w, h, frames);
+				processItem(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames);
 			}
 		}
 
 		in.close();
+		r = true;
 	}
-	catch (const std::exception&)
+	catch (const std::exception& e)
 	{
+		if (currentLineNumber)
+		{
+			std::cout << filename << ":" << currentLineNumber << ": " << e.what() << std::endl;
+		}
+		else
+		{
+			std::cout << "Error: " << e.what() << std::endl;
+		}
+
 		r = false;
 	}
 
@@ -127,12 +171,8 @@ int main(int argc, char** argv)
 
 		if (processScript(filename))
 		{
-			auto msTaken = std::chrono::duration_cast<std::chrono::milliseconds>(startTime - std::chrono::steady_clock::now()).count();
-			std::cout << "Finished in " << msTaken << "ms";
-		}
-		else
-		{
-			std::cout << "Error processing" << std::endl;
+			auto msTaken = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count();
+			std::cout << "Finished in " << msTaken << "ms" << std::endl;
 		}
 	}
 	else

@@ -18,14 +18,19 @@ public:
 		White	= 0xffffff,
 	};
 
+	bool operator==(const Colour& other) const
+	{
+		return m_internalColour == other.m_internalColour;
+	}
+
 	Colour() = delete;
-	Colour(const BBCColour&) = delete;
+	Colour(const BBCColour& c) : m_internalColour(c) {}
 	Colour(uint32_t rawRGBA) = delete;
 	Colour(uint8_t r, uint8_t g, uint8_t b);
 	~Colour() {}
 
 	static std::map<uint32_t, BBCColour> m_colourMap;
-	BBCColour m_thisColour;
+	BBCColour m_internalColour;
 };
 
 class ScreenByte
@@ -35,22 +40,33 @@ public:
 	ScreenByte() = delete;
 	~ScreenByte() {}
 
-	// This checks the colour passed in
-	uint8_t getPixelMask(const Colour& pixelColour)
+	bool addPixel(uint8_t pixelIndex)
 	{
-		return 0;
-	}
-
-	bool addPixel(const Colour& pixelColour)
-	{
-		switch (m_mode)
+		// TODO: This currently assumes mode 5
+		switch (pixelIndex)
 		{
-		case 2:
+		case 0:
+			// Nothing
 			break;
 
+		case 1:
+			m_byte |= 0b011;
+			break;
+
+		case 2:
+			m_byte |= 0b110;
+			break;
+
+		case 3:
+			m_byte |= 0b111;
+			break;
+
+		case 4:
 		case 5:
-			auto mask = getPixelMask(pixelColour);
-			// uint8_t mask = 0b11 << m_offset;
+		case 6:
+		case 7:
+		default:
+			throw std::runtime_error("Bad pixel for this mode");
 			break;
 		}
 
@@ -89,7 +105,7 @@ public:
 	}
 
 private:
-	static std::map<Colour::BBCColour,uint8_t> m_pop;
+	static std::map<Colour::BBCColour,uint8_t> m_mode5Map;
 
 	uint8_t m_byte;
 	uint32_t m_offset;

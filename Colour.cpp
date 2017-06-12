@@ -12,7 +12,7 @@ std::map<uint32_t, Colour::BBCColour> Colour::m_colourMap =
 	{0xffffffff,BBCColour::White}
 };
 
-std::map<Colour::BBCColour,uint8_t> ScreenByte::m_pop =
+std::map<Colour::BBCColour,uint8_t> ScreenByte::m_mode5Map =
 {
 	{Colour::BBCColour::Black,	0b00},
 	{Colour::BBCColour::Red,	0b00},
@@ -32,7 +32,7 @@ Colour::Colour(uint8_t r, uint8_t g, uint8_t b)
 
 	if (it != m_colourMap.end())
 	{
-		m_thisColour = it->second;
+		m_internalColour = it->second;
 	}
 	else
 	{
