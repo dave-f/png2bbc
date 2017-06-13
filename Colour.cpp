@@ -12,16 +12,16 @@ std::map<uint32_t, Colour::BBCColour> Colour::m_colourMap =
 	{0xffffffff,BBCColour::White}
 };
 
-std::map<Colour::BBCColour,uint8_t> ScreenByte::m_mode5Map =
+std::map<std::string, Colour::BBCColour> Colour::m_colourMapStr = 
 {
-	{Colour::BBCColour::Black,	0b00},
-	{Colour::BBCColour::Red,	0b00},
-	{Colour::BBCColour::Green,	0b00},
-	{Colour::BBCColour::Yellow, 0b00},
-	{Colour::BBCColour::Blue,	0b00},
-	{Colour::BBCColour::Magenta,0b00},
-	{Colour::BBCColour::Cyan,	0b00},
-	{Colour::BBCColour::White,	0b11}
+	{"BLACK",	BBCColour::Black},
+	{"RED",		BBCColour::Red},
+	{"GREEN",	BBCColour::Green},
+	{"YELLOW",	BBCColour::Yellow},
+	{"BLUE",	BBCColour::Blue},
+	{"MAGENTA",	BBCColour::Magenta},
+	{"CYAN",	BBCColour::Cyan},
+	{"WHITE",	BBCColour::White}
 };
 
 Colour::Colour(uint8_t r, uint8_t g, uint8_t b)
@@ -31,6 +31,20 @@ Colour::Colour(uint8_t r, uint8_t g, uint8_t b)
 	auto it = m_colourMap.find(key);
 
 	if (it != m_colourMap.end())
+	{
+		m_internalColour = it->second;
+	}
+	else
+	{
+		throw std::runtime_error("Invalid BBC Colour");
+	}
+}
+
+Colour::Colour(const std::string& colourName)
+{
+	auto it = m_colourMapStr.find(colourName);
+
+	if (it != m_colourMapStr.end())
 	{
 		m_internalColour = it->second;
 	}

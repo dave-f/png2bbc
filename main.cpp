@@ -6,6 +6,7 @@
 #include <regex>
 
 #include "Image.h"
+#include "ScreenByte.h"
 
 // Build on g++ with -std=c++11
 static constexpr char versionString[] = "0.1";
@@ -70,9 +71,6 @@ bool processScript(const std::string& filename)
 	std::fstream in;
 	in.exceptions(std::fstream::badbit);
 
-	// Which colours we permit
-	std::vector<Colour> defaultColours = { Colour::BBCColour::Black, Colour::BBCColour::Red, Colour::BBCColour::Green, Colour::BBCColour::Yellow };
-
 	try
 	{
 		in.open(filename, std::ios::in);
@@ -85,12 +83,12 @@ bool processScript(const std::string& filename)
 		std::string currentLine;
 		std::shared_ptr<Image> currentImage;
 		int8_t currentMode(-1);
-		std::shared_ptr<std::vector<Colour>> currentColours = std::make_shared<std::vector<Colour>>(defaultColours);
+		std::shared_ptr<std::vector<Colour>> currentColours = std::make_shared<std::vector<Colour>>();
 
 		// MODE <0-7>
 		std::regex rxModeCommand(R"([[:space:]]*MODE[[:space:]]+([0-7]).*)");
 		// COLOURS <name>=<0..15>[,...]
-		std::regex rxColoursCommand(R"([[:space:]]*COLOURS.*)");
+		std::regex rxColoursCommand(R"([[:space:]]*COLOURS[[:space:]]+(.*))");
 		// IMAGE <filename>
 		std::regex rxImageCommand(R"([[:space:]]*IMAGE[[:space:]]+([^[:space:]]+).*)");
 		// CREATE-FILE <filename> FROM-DATA <x> <y> <w> <h> <num-frames> [row/col pixel-style]
@@ -107,7 +105,15 @@ bool processScript(const std::string& filename)
 			}
 			else if (std::regex_match(currentLine,m,rxColoursCommand))
 			{
-				// TODO: Set current palette
+				std::regex words_regex("[^ ,]+");
+				auto colourList = m[1].str();
+				std::sregex_iterator s(colourList.begin(),colourList.end(), words_regex);
+				auto se = std::sregex_iterator();
+
+				for (auto i = s; i !=se; ++i)
+				{
+					currentColours->push_back(Colour(i->str()));
+				}
 			}
 			else if (std::regex_match(currentLine,m,rxImageCommand))
 			{
