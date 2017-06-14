@@ -200,6 +200,8 @@ int main(int argc, char** argv)
 		{
 			auto msTaken = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count();
 			std::cout << "Finished in " << msTaken << "ms" << std::endl;
+
+			return 0;
 		}
 	}
 	else
