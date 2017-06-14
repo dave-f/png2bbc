@@ -27,7 +27,6 @@ void processItem(const std::shared_ptr<Image> theImage, uint32_t mode, std::shar
 	std::fstream outFile(binFile, std::ios::out | std::ios::binary);
 	outFile.exceptions(std::fstream::failbit | std::fstream::badbit);
 
-	uint32_t currentX = x;
 	ScreenByte currentByte(mode);
 
 	if (w % currentByte.getPixelsPerByte() !=0)
@@ -65,7 +64,7 @@ void processItem(const std::shared_ptr<Image> theImage, uint32_t mode, std::shar
 			}
 		}
 
-		currentX += w;
+		x += w;
 	}
 
 	outFile.close();
