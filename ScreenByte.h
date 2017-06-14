@@ -5,25 +5,25 @@ public:
 	ScreenByte() = delete;
 	~ScreenByte() {}
 
-	bool addPixel(uint8_t pixelIndex)
+	// TODO: This currently assumes mode 5
+	bool addPixel(uint8_t pixelValue)
 	{
-		// TODO: This currently assumes mode 5
-		switch (pixelIndex)
+		// Then or in new pixel (assumes mode 5 here)
+		switch (pixelValue)
 		{
 		case 0:
-			// Nothing
 			break;
 
 		case 1:
-			m_byte |= 0b011;
+			m_byte |= (0b00001);
 			break;
 
 		case 2:
-			m_byte |= 0b110;
+			m_byte |= (0b10000);
 			break;
 
 		case 3:
-			m_byte |= 0b111;
+			m_byte |= (0b10001);
 			break;
 
 		case 4:
@@ -38,25 +38,44 @@ public:
 		if (++m_offset == getPixelsPerByte())
 		{
 			m_offset = 0;
+
+			// This byte is done
 			return true;
 		}
 		else
 		{
+			m_byte <<= 1;
+
 			return false;
 		}
 	}
 
-	uint8_t getByte() const
+	uint8_t readByte()
 	{
-		return m_byte;
+		uint8_t r = m_byte;
+		m_byte    = 0;
+
+		return r;
 	}
 
 	uint32_t getPixelsPerByte() const
 	{
 		switch (m_mode)
 		{
+		case 1:
+			return 2;
+			break;
+
 		case 2:
 			return 2;
+			break;
+
+		case 3:
+			return 0;
+			break;
+
+		case 4:
+			return 0;
 			break;
 
 		case 5:

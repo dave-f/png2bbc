@@ -1,11 +1,4 @@
-; Script
-; ------
-; MODE <0-7> 
-; COLOURS <NAME>[,...]
-; IMAGE <file.png>
-; CREATE-FILE "out.bin" FROM-DATA x y w h num_sprites [PIXEL-ORDER n]
-
-MODE 5 
-COLOURS BLACK,WHITE,RED,BLUE
+MODE 5
+COLOURS BLACK RED YELLOW WHITE
 IMAGE tile.png
-CREATE-FILE aliens.bin FROM-DATA 0 16 16 16 1
+CREATE-FILE alien.bin FROM-DATA 0 0 8 8 1

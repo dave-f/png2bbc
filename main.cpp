@@ -51,7 +51,7 @@ void processItem(const std::shared_ptr<Image> theImage, uint32_t mode, std::shar
 
 				if (currentByte.addPixel(s))
 				{
-					auto theByte = currentByte.getByte();
+					auto theByte = currentByte.readByte();
 
 					outFile.write(reinterpret_cast<const char*>(&theByte), 1);
 				}
@@ -121,9 +121,9 @@ bool processScript(const std::string& filename)
 			}
 			else if (std::regex_match(currentLine,m,rxCreateCommand))
 			{
-				if (currentMode==-1)
+				if (currentMode != 5) // Currently only 5 supported
 				{
-					throw std::runtime_error("No mode set");
+					throw std::runtime_error("Bad mode");
 				}
 
 				if (!currentColours)
@@ -133,7 +133,7 @@ bool processScript(const std::string& filename)
 
 				if (!currentImage)
 				{
-					throw std::runtime_error("No image set");
+					throw std::runtime_error("No image");
 				}
 
 				auto outputFile	= m[1].str();
