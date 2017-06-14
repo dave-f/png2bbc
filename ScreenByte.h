@@ -63,7 +63,7 @@ public:
 		switch (m_mode)
 		{
 		case 1:
-			return 2;
+			return 4;
 			break;
 
 		case 2:
@@ -71,11 +71,11 @@ public:
 			break;
 
 		case 3:
-			return 0;
+			return 8;
 			break;
 
 		case 4:
-			return 0;
+			return 8;
 			break;
 
 		case 5:
