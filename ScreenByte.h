@@ -2,6 +2,8 @@
 
 #include <array>
 
+#include "Colour.h"
+
 class ScreenByte
 {
 public:
@@ -9,15 +11,15 @@ public:
 	ScreenByte() = delete;
 	~ScreenByte() {}
 
-	static constexpr std::array<uint8_t, 2> twoColourModeValues   = { 0b0, 0b1 };
+	static constexpr std::array<uint8_t, 2> twoColourModeValues = { 1, 0};
 	static constexpr std::array<uint8_t, 4> fourColourModeValues  = { 0b00000, 0b00001, 0b10000, 0b10001 };
 	static constexpr std::array<uint8_t, 8> eightColourModeValues = { 0b00000000, 0b00000001, 0b00000100, 0b00000101, 0b00010000, 0b00010001, 0b00010100, 0b00010101 };
 
 	bool addPixel(uint8_t pixelValue)
 	{
-		if (pixelValue > Colour::getNumberOfColoursForMode(m_mode))
+	  if (pixelValue > Colour::getNumberOfColoursForMode(m_mode))
 		{
-			throw std::exception("Pixel value too high for this mode");
+			throw std::runtime_error("Pixel value too high for this mode");
 		}
 
 		switch (m_mode)
