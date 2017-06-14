@@ -9,12 +9,16 @@
 #include "ScreenByte.h"
 
 // Build on g++ with -std=c++11
-static constexpr char versionString[] = "0.1";
+static constexpr char versionString[] = "1.0";
+
+void displayTitle()
+{
+	std::cout << "png2bbc (version " << versionString << ")" << std::endl << std::endl;
+}
 
 void displayUsage()
 {
-	std::cout << "png2bbc (version " << versionString << ")" << std::endl;
-	std::cout << "A utility to create BBC micro sprites from PNG images" << std::endl << std::endl;
+	std::cout << "A utility to create BBC micro sprites from PNG images" << std::endl;
 	std::cout << "Usage: png2bbc <scriptfile>" << std::endl;
 }
 
@@ -23,10 +27,13 @@ void processItem(const std::shared_ptr<Image> theImage, uint32_t mode, std::shar
 	std::fstream outFile(binFile, std::ios::out | std::ios::binary);
 	outFile.exceptions(std::fstream::failbit | std::fstream::badbit);
 
-	// TODO: check width is divisible by ppb
 	uint32_t currentX = x;
 	ScreenByte currentByte(mode);
-	auto ppb = currentByte.getPixelsPerByte();
+
+	if (w % currentByte.getPixelsPerByte() !=0)
+	{
+		throw std::runtime_error("Sprite width not a multiple of pixels per byte");
+	}
 
 	for (uint32_t k = 0; k<numFrames; ++k)
 	{
@@ -85,9 +92,9 @@ bool processScript(const std::string& filename)
 		int8_t currentMode(-1);
 		std::shared_ptr<std::vector<Colour>> currentColours = std::make_shared<std::vector<Colour>>();
 
-		// MODE <0-7>
-		std::regex rxModeCommand(R"([[:space:]]*MODE[[:space:]]+([0-7]).*)");
-		// COLOURS <name>=<0..15>[,...]
+		// MODE <0-5>
+		std::regex rxModeCommand(R"([[:space:]]*MODE[[:space:]]+([0-5]).*)");
+		// COLOURS <colour>[,...]
 		std::regex rxColoursCommand(R"([[:space:]]*COLOURS[[:space:]]+(.*))");
 		// IMAGE <filename>
 		std::regex rxImageCommand(R"([[:space:]]*IMAGE[[:space:]]+([^[:space:]]+).*)");
@@ -112,7 +119,14 @@ bool processScript(const std::string& filename)
 
 				for (auto i = s; i !=se; ++i)
 				{
-					currentColours->push_back(Colour(i->str()));
+					auto upperString = i->str();
+
+					for (auto & c : upperString)
+					{
+						c = toupper(c);
+					}
+
+					currentColours->push_back(Colour(upperString));
 				}
 			}
 			else if (std::regex_match(currentLine,m,rxImageCommand))
@@ -121,7 +135,7 @@ bool processScript(const std::string& filename)
 			}
 			else if (std::regex_match(currentLine,m,rxCreateCommand))
 			{
-				if (currentMode != 5) // Currently only 5 supported
+				if (currentMode == -1)
 				{
 					throw std::runtime_error("Bad mode");
 				}
@@ -136,6 +150,11 @@ bool processScript(const std::string& filename)
 					throw std::runtime_error("No image");
 				}
 
+				if (currentColours->size() > Colour::getNumberOfColoursForMode(currentMode))
+				{
+					throw std::runtime_error("Too many colours for this mode");
+				}
+
 				auto outputFile	= m[1].str();
 				uint32_t x		= std::stoi(m[2].str());
 				uint32_t y		= std::stoi(m[3].str());
@@ -144,6 +163,7 @@ bool processScript(const std::string& filename)
 				uint32_t frames = std::stoi(m[6].str());
 
 				processItem(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames);
+				std::cout << "Built " << outputFile << std::endl;
 			}
 		}
 
@@ -169,6 +189,8 @@ bool processScript(const std::string& filename)
 
 int main(int argc, char** argv)
 {
+	displayTitle();
+
 	// We currently only accept one argument; the script file
 	if (argc==2)
 	{

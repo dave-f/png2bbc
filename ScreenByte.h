@@ -1,3 +1,7 @@
+#pragma once
+
+#include <array>
+
 class ScreenByte
 {
 public:
@@ -5,41 +9,42 @@ public:
 	ScreenByte() = delete;
 	~ScreenByte() {}
 
-	// TODO: This currently assumes mode 5
+	static constexpr std::array<uint8_t, 2> twoColourModeValues   = { 0b0, 0b1 };
+	static constexpr std::array<uint8_t, 4> fourColourModeValues  = { 0b00000, 0b00001, 0b10000, 0b10001 };
+	static constexpr std::array<uint8_t, 8> eightColourModeValues = { 0b00000000, 0b00000001, 0b00000100, 0b00000101, 0b00010000, 0b00010001, 0b00010100, 0b00010101 };
+
 	bool addPixel(uint8_t pixelValue)
 	{
-		// Then or in new pixel (assumes mode 5 here)
-		switch (pixelValue)
+		if (pixelValue > Colour::getNumberOfColoursForMode(m_mode))
+		{
+			throw std::exception("Pixel value too high for this mode");
+		}
+
+		switch (m_mode)
 		{
 		case 0:
+		case 3:
+		case 4:
+			m_byte |= twoColourModeValues[pixelValue];
 			break;
 
 		case 1:
-			m_byte |= (0b00001);
+		case 5:
+			m_byte |= fourColourModeValues[pixelValue];
 			break;
 
 		case 2:
-			m_byte |= (0b10000);
+			m_byte |= eightColourModeValues[pixelValue];
 			break;
 
-		case 3:
-			m_byte |= (0b10001);
-			break;
-
-		case 4:
-		case 5:
-		case 6:
-		case 7:
 		default:
-			throw std::runtime_error("Bad pixel for this mode");
-			break;
+			throw std::runtime_error("Bad mode");
 		}
 
 		if (++m_offset == getPixelsPerByte())
 		{
 			m_offset = 0;
 
-			// This byte is done
 			return true;
 		}
 		else
@@ -54,6 +59,7 @@ public:
 	{
 		uint8_t r = m_byte;
 		m_byte    = 0;
+		m_offset  = 0;
 
 		return r;
 	}
@@ -62,6 +68,10 @@ public:
 	{
 		switch (m_mode)
 		{
+		case 0:
+			return 8;
+			break;
+
 		case 1:
 			return 4;
 			break;

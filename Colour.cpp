@@ -53,3 +53,27 @@ Colour::Colour(const std::string& colourName)
 		throw std::runtime_error("Invalid BBC Colour");
 	}
 }
+
+uint32_t Colour::getNumberOfColoursForMode(uint32_t mode)
+{
+	switch (mode)
+	{
+		case 0:
+		case 3:
+		case 4:
+			return 2;
+			break;
+
+		case 1:
+		case 5:
+			return 4;
+			break;
+
+		case 2:
+			return 8;
+			break;
+
+		default:
+			return 0;
+	}
+}
