@@ -3,7 +3,10 @@ A tool for creating BBC Micro graphics.  Reads PNG files and outputs binary data
 
 No external dependencies are required, just a C++11 compiler.
 
-The script is built up of 4 very simple commands:
+The program reads in a script which defines how the graphics are created.  This script is built up of 4 very simple commands, which are detailed below.
+
+---
+
 ````
 MODE <0-5>
 ````
