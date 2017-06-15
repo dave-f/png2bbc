@@ -11,7 +11,7 @@ public:
 	ScreenByte() = delete;
 	~ScreenByte() {}
 
-	static constexpr std::array<uint8_t, 2> twoColourModeValues = { 1, 0};
+	static constexpr std::array<uint8_t, 2> twoColourModeValues   = { 0, 1 };
 	static constexpr std::array<uint8_t, 4> fourColourModeValues  = { 0b00000, 0b00001, 0b10000, 0b10001 };
 	static constexpr std::array<uint8_t, 8> eightColourModeValues = { 0b00000000, 0b00000001, 0b00000100, 0b00000101, 0b00010000, 0b00010001, 0b00010100, 0b00010101 };
 
@@ -71,27 +71,18 @@ public:
 		switch (m_mode)
 		{
 		case 0:
+		case 3:
+		case 4:
 			return 8;
 			break;
 
 		case 1:
+		case 5:
 			return 4;
 			break;
 
 		case 2:
 			return 2;
-			break;
-
-		case 3:
-			return 8;
-			break;
-
-		case 4:
-			return 8;
-			break;
-
-		case 5:
-			return 4;
 			break;
 
 		default:
