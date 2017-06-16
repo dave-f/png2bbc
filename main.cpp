@@ -141,7 +141,7 @@ bool processScript(const std::string& filename)
                     throw std::runtime_error("Bad mode");
                 }
 
-                if (!currentColours)
+                if (currentColours->empty())
                 {
                     throw std::runtime_error("No palette set");
                 }
