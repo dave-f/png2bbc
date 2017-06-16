@@ -116,6 +116,8 @@ bool processScript(const std::string& filename)
 				std::sregex_iterator s(colourList.begin(),colourList.end(), words_regex);
 				auto se = std::sregex_iterator();
 
+				currentColours->clear();
+
 				for (auto i = s; i !=se; ++i)
 				{
 					auto upperString = i->str();
