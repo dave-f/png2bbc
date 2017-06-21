@@ -26,14 +26,14 @@ COLOURS <COLOUR> <COLOUR> ..
 ````
 Specifies the colours.  Use standard BBC Micro colours, i.e. BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN and WHITE.
 
-Ordering is important here; colours found in the image will be mapped to pixel values corresponding to their order in this list.  For example, if RED is the second item in the list, any red found in the image will be written as pixel value 2.
+Ordering is important here; colours found in the image will be mapped to pixel values corresponding to their order in this list.  For example, if RED is the second item in the list, any red found in the image will be written as pixel value 2 (actually 1, since it's  zero-based).
 
 ---
 
 ````
-CREATE-FILE <filename> FROM-DATA <x> <y> <w> <h> <number-frames>
+CREATE-FILE <filename> FROM-DATA <x> <y> <w> <h> <number-frames> [DATA-ORDER <BLOCK|LINE>]
 ````
-Creates sprite data using the current image, colours and mode.
+Creates sprite data using the current image, colours and mode.  Pixels are written in line format (default) or block format, which mimics the BBC Micro's screen layout.  This is handy for writing out graphics which are always drawn on character boundaries (e.g. tiles)
 
 ---
 
