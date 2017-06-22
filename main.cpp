@@ -8,8 +8,8 @@
 #include "Image.h"
 #include "ScreenByte.h"
 
-// Build on g++ with --std=c++11
-static constexpr char versionString[] = "1.1";
+// Build on g++ with -std=c++11
+static constexpr char versionString[] = "1.2";
 
 enum class PixelOrder : uint8_t
 {
@@ -50,13 +50,13 @@ void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::sha
 	auto blocksX  = w / ppb;
 	auto blocksY  = h / 8;
 
-	for (uint32_t k=0; k<numBlocks; ++k) // num frames
+	for (uint32_t k=0; k<numBlocks; ++k)
 	{
-		for (uint32_t j = 0; j<blocksY; ++j) // for every char block
+		for (uint32_t j = 0; j<blocksY; ++j)
 		{
-			for (uint32_t i = 0; i<blocksX; ++i) // for every row
+			for (uint32_t i = 0; i<blocksX; ++i)
 			{
-				for (uint32_t n = 0; n<8; ++n) // pixels within this char
+				for (uint32_t n = 0; n<8; ++n)
 				{
 					for (uint32_t m = 0; m<ppb; ++m)
 					{
@@ -84,6 +84,7 @@ void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::sha
 				}
 			}
 		}
+		x += w;
 	}
 }
 
@@ -129,7 +130,6 @@ void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::sh
                 }
             }
         }
-
         x += w;
     }
 
@@ -164,7 +164,7 @@ bool processScript(const std::string& filename)
         std::regex rxColoursCommand(R"([[:space:]]*COLOURS[[:space:]]+(.*))",std::regex_constants::icase);
         // IMAGE <filename>
         std::regex rxImageCommand(R"([[:space:]]*IMAGE[[:space:]]+([^[:space:]]+).*)",std::regex_constants::icase);
-        // CREATE-FILE <filename> FROM-DATA <x> <y> <w> <h> <num-frames> [row/col pixel-style]
+        // CREATE-FILE <filename> FROM-DATA <x> <y> <w> <h> <num-frames> [DATA-ORDER <BLOCK | LINE>]
         std::regex rxCreateCommand(R"([[:space:]]*CREATE-FILE[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)([[:space:]]+DATA-ORDER[[:space:]]+(BLOCK|LINE))?.*)",std::regex_constants::icase);
 
         while (!in.eof() && std::getline(in, currentLine))
@@ -240,7 +240,7 @@ bool processScript(const std::string& filename)
 					processSprite(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames);
 				}
 
-                std::cout << "Built " << outputFile << std::endl;
+				std::cout << "Built " << outputFile << " (" << frames << " sprites; " << (currentPixelOrder == PixelOrder::Block ? "block format)" : "line format)") << std::endl;
             }
         }
 
