@@ -240,7 +240,7 @@ bool processScript(const std::string& filename)
 					processSprite(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames);
 				}
 
-				std::cout << "Built " << outputFile << " (" << frames << " sprites; " << (currentPixelOrder == PixelOrder::Block ? "block format)" : "line format)") << std::endl;
+				std::cout << "Built " << outputFile << " (" << frames << " sprite(s); " << (currentPixelOrder == PixelOrder::Block ? "block format)" : "line format)") << std::endl;
             }
         }
 
