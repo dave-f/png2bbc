@@ -13,8 +13,8 @@ static constexpr char versionString[] = "1.2";
 
 enum class PixelOrder : uint8_t
 {
-	Line = 1,
-	Block
+    Line = 1,
+    Block
 };
 
 void displayTitle()
@@ -31,61 +31,61 @@ void displayUsage()
 // Produce a block of data in character row format, useful for tiles
 void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::shared_ptr<std::vector<Colour>> theColours, const std::string& binFile, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numBlocks)
 {
-	std::fstream outFile(binFile, std::ios::out | std::ios::binary);
-	outFile.exceptions(std::fstream::failbit | std::fstream::badbit);
+    std::fstream outFile(binFile, std::ios::out | std::ios::binary);
+    outFile.exceptions(std::fstream::failbit | std::fstream::badbit);
 
-	ScreenByte currentByte(mode);
-	auto ppb = currentByte.getPixelsPerByte();
+    ScreenByte currentByte(mode);
+    auto ppb = currentByte.getPixelsPerByte();
 
-	if ( w % ppb != 0 )
-	{
-		throw std::runtime_error("Block width not a multiple of pixels per byte");
-	}
+    if ( w % ppb != 0 )
+    {
+        throw std::runtime_error("Block width not a multiple of pixels per byte");
+    }
 
-	if ( h % 8 != 0 )
-	{
-		throw std::runtime_error("Block height not a multiple of eight");
-	}
+    if ( h % 8 != 0 )
+    {
+        throw std::runtime_error("Block height not a multiple of eight");
+    }
 
-	auto blocksX  = w / ppb;
-	auto blocksY  = h / 8;
+    auto blocksX  = w / ppb;
+    auto blocksY  = h / 8;
 
-	for (uint32_t k=0; k<numBlocks; ++k)
-	{
-		for (uint32_t j = 0; j<blocksY; ++j)
-		{
-			for (uint32_t i = 0; i<blocksX; ++i)
-			{
-				for (uint32_t n = 0; n<8; ++n)
-				{
-					for (uint32_t m = 0; m<ppb; ++m)
-					{
-						auto thisPixel = theImage->getPixel(x + (i*ppb)+m, y + (j*8)+n);
-						auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
+    for (uint32_t k=0; k<numBlocks; ++k)
+    {
+        for (uint32_t j = 0; j<blocksY; ++j)
+        {
+            for (uint32_t i = 0; i<blocksX; ++i)
+            {
+                for (uint32_t n = 0; n<8; ++n)
+                {
+                    for (uint32_t m = 0; m<ppb; ++m)
+                    {
+                        auto thisPixel = theImage->getPixel(x + (i*ppb)+m, y + (j*8)+n);
+                        auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
 
-						ptrdiff_t s;
+                        ptrdiff_t s;
 
-						if (it != theColours->end())
-						{
-							s = std::distance(theColours->begin(), it);
-						}
-						else
-						{
-							throw std::runtime_error("Unsupported colour");
-						}
+                        if (it != theColours->end())
+                        {
+                            s = std::distance(theColours->begin(), it);
+                        }
+                        else
+                        {
+                            throw std::runtime_error("Unsupported colour");
+                        }
 
-						if (currentByte.addPixel(s))
-						{
-							auto theByte = currentByte.readByte();
+                        if (currentByte.addPixel(s))
+                        {
+                            auto theByte = currentByte.readByte();
 
-							outFile.write(reinterpret_cast<const char*>(&theByte), 1);
-						}
-					}
-				}
-			}
-		}
-		x += w;
-	}
+                            outFile.write(reinterpret_cast<const char*>(&theByte), 1);
+                        }
+                    }
+                }
+            }
+        }
+        x += w;
+    }
 }
 
 // Produce a block of data in line format, useful for sprites
@@ -156,7 +156,7 @@ bool processScript(const std::string& filename)
         std::shared_ptr<Image> currentImage;
         int8_t currentMode(-1);
         std::shared_ptr<std::vector<Colour>> currentColours = std::make_shared<std::vector<Colour>>();
-		PixelOrder currentPixelOrder;
+        PixelOrder currentPixelOrder;
 
         // MODE <0-5>
         std::regex rxModeCommand(R"([[:space:]]*MODE[[:space:]]+([0-5]).*)",std::regex_constants::icase);
@@ -229,18 +229,18 @@ bool processScript(const std::string& filename)
                 uint32_t w        = std::stoi(m[4].str());
                 uint32_t h        = std::stoi(m[5].str());
                 uint32_t frames   = std::stoi(m[6].str());
-				currentPixelOrder = (m[7].str().find("BLOCK") != std::string::npos) ? PixelOrder::Block : PixelOrder::Line;
+                currentPixelOrder = (m[7].str().find("BLOCK") != std::string::npos) ? PixelOrder::Block : PixelOrder::Line;
 
-				if (currentPixelOrder == PixelOrder::Block)
-				{
-					processBlock(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames);
-				}
-				else
-				{
-					processSprite(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames);
-				}
+                if (currentPixelOrder == PixelOrder::Block)
+                {
+                    processBlock(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames);
+                }
+                else
+                {
+                    processSprite(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames);
+                }
 
-				std::cout << "Built " << outputFile << " (" << frames << " sprite(s); " << (currentPixelOrder == PixelOrder::Block ? "block format)" : "line format)") << std::endl;
+                std::cout << "Built " << outputFile << " (" << frames << " sprite(s); " << (currentPixelOrder == PixelOrder::Block ? "block format)" : "line format)") << std::endl;
             }
         }
 
@@ -286,6 +286,6 @@ int main(int argc, char** argv)
     {
         displayUsage();
     }
-  
+
   return 1;
 }
