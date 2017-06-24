@@ -89,7 +89,7 @@ void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::sha
 }
 
 // Produce a block of data in line format, useful for sprites
-void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::shared_ptr<std::vector<Colour>> theColours, const std::string& binFile, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numFrames)
+void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::shared_ptr<std::vector<Colour>> theColours, const std::string& binFile, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numFrames, uint32_t numShifts)
 {
     std::fstream outFile(binFile, std::ios::out | std::ios::binary);
     outFile.exceptions(std::fstream::failbit | std::fstream::badbit);
@@ -105,6 +105,28 @@ void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::sh
     {
         for (uint32_t j = y; j < y + h; ++j)
         {
+            // If we are shifting, write extra black pixels into each row
+            ptrdiff_t blackPixelValue;
+
+            if (numShifts>0)
+            {
+                auto it = std::find(theColours->begin(), theColours->end(), Colour::BBCColour::Black);
+
+                if (it == theColours->end())
+                {
+                    throw std::runtime_error("No black colour found (needed for shifting)");
+                }
+                else
+                {
+                    blackPixelValue = std::distance(theColours->begin(), it);
+
+                    for (uint32_t i=0; i<numShifts; ++i)
+                    {
+                        currentByte.addPixel(blackPixelValue);
+                    }
+                }
+            }
+
             for (uint32_t i = x; i < x + w; ++i)
             {
                 auto thisPixel = theImage->getPixel(i, j);
@@ -128,6 +150,16 @@ void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::sh
 
                     outFile.write(reinterpret_cast<const char*>(&theByte), 1);
                 }
+            }
+
+            // Check if theres any residual pixels to write
+            if ((numShifts > 0) && !currentByte.isEmpty())
+            {
+                while (!currentByte.addPixel(blackPixelValue))
+                    ;
+                
+                auto theByte = currentByte.readByte();
+                outFile.write(reinterpret_cast<const char*>(&theByte),1);
             }
         }
         x += w;
@@ -237,7 +269,15 @@ bool processScript(const std::string& filename)
                 }
                 else
                 {
-                    processSprite(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames);
+                    processSprite(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames, 0);
+#if 0                    
+                    // if shifting, do a loop here
+                    for (uint32_t i=0; i<4; ++i)
+                    {
+                        // outputFile += "_" + i;
+                        processSprite(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames, i); // shift by 1
+                    }
+#endif
                 }
 
                 std::cout << "Built " << outputFile << " (" << frames << " sprite(s); " << (currentPixelOrder == PixelOrder::Block ? "block format)" : "line format)") << std::endl;
@@ -287,5 +327,5 @@ int main(int argc, char** argv)
         displayUsage();
     }
 
-  return 1;
+    return 1;
 }

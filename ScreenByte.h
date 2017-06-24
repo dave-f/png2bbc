@@ -17,7 +17,7 @@ public:
 
     bool addPixel(uint8_t pixelValue)
     {
-      if (pixelValue > Colour::getNumberOfColoursForMode(m_mode))
+        if (pixelValue > Colour::getNumberOfColoursForMode(m_mode))
         {
             throw std::runtime_error("Pixel value too high for this mode");
         }
@@ -55,6 +55,11 @@ public:
 
             return false;
         }
+    }
+
+    bool isEmpty() const
+    {
+        return (m_offset==0);
     }
 
     uint8_t readByte()
