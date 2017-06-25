@@ -14,6 +14,7 @@ static constexpr char versionString[] = "1.2";
 enum class PixelOrder : uint8_t
 {
     Line = 1,
+    LineWithPreshifting,
     Block
 };
 
@@ -196,8 +197,8 @@ bool processScript(const std::string& filename)
         std::regex rxColoursCommand(R"([[:space:]]*COLOURS[[:space:]]+(.*))",std::regex_constants::icase);
         // IMAGE <filename>
         std::regex rxImageCommand(R"([[:space:]]*IMAGE[[:space:]]+([^[:space:]]+).*)",std::regex_constants::icase);
-        // CREATE-FILE <filename> FROM-DATA <x> <y> <w> <h> <num-frames> [DATA-ORDER <BLOCK | LINE>]
-        std::regex rxCreateCommand(R"([[:space:]]*CREATE-FILE[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)([[:space:]]+DATA-ORDER[[:space:]]+(BLOCK|LINE))?.*)",std::regex_constants::icase);
+        // CREATE-FILE <filename> FROM-DATA <x> <y> <w> <h> <num-frames> [DATA-ORDER <BLOCK | LINE | SHIFTEDLINE>
+        std::regex rxCreateCommand(R"([[:space:]]*CREATE-FILE[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)([[:space:]]+DATA-ORDER[[:space:]]+(BLOCK|LINE|PRESHIFTEDLINE))?.*)",std::regex_constants::icase);
 
         while (!in.eof() && std::getline(in, currentLine))
         {
@@ -261,23 +262,25 @@ bool processScript(const std::string& filename)
                 uint32_t w        = std::stoi(m[4].str());
                 uint32_t h        = std::stoi(m[5].str());
                 uint32_t frames   = std::stoi(m[6].str());
+                // TODO look for PRESHIFTEDLINE here too
                 currentPixelOrder = (m[7].str().find("BLOCK") != std::string::npos) ? PixelOrder::Block : PixelOrder::Line;
 
                 if (currentPixelOrder == PixelOrder::Block)
                 {
                     processBlock(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames);
                 }
-                else
+                else if (currentPixelOrder == PixelOrder::LineWithPreshifting)
                 {
-                    processSprite(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames, 0);
-#if 0                    
-                    // if shifting, do a loop here
+                    // TODO Get PPB for currentMode
                     for (uint32_t i=0; i<4; ++i)
                     {
-                        // outputFile += "_" + i;
-                        processSprite(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames, i); // shift by 1
+                        // TODO outputFile += "_" + i;
+                        // TODO processSprite(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames, i); // shift by 1
                     }
-#endif
+                }
+                else // default
+                {
+                    processSprite(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames, 0);
                 }
 
                 std::cout << "Built " << outputFile << " (" << frames << " sprite(s); " << (currentPixelOrder == PixelOrder::Block ? "block format)" : "line format)") << std::endl;
