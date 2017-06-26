@@ -59,7 +59,6 @@ uint32_t Colour::getNumberOfColoursForMode(uint32_t mode)
     switch (mode)
     {
         case 0:
-        case 3:
         case 4:
             return 2;
             break;
@@ -75,5 +74,28 @@ uint32_t Colour::getNumberOfColoursForMode(uint32_t mode)
 
         default:
             return 0;
+    }
+}
+
+uint32_t Colour::getPixelsPerByteForMode(uint32_t mode)
+{
+    switch (mode)
+    {
+    case 0:
+    case 4:
+        return 8;
+        break;
+
+    case 1:
+    case 5:
+        return 4;
+        break;
+
+    case 2:
+        return 2;
+        break;
+
+    default:
+        return 0;
     }
 }

@@ -25,7 +25,6 @@ public:
         switch (m_mode)
         {
         case 0:
-        case 3:
         case 4:
             m_byte |= twoColourModeValues[pixelValue];
             break;
@@ -73,27 +72,7 @@ public:
 
     uint32_t getPixelsPerByte() const
     {
-        switch (m_mode)
-        {
-        case 0:
-        case 3:
-        case 4:
-            return 8;
-            break;
-
-        case 1:
-        case 5:
-            return 4;
-            break;
-
-        case 2:
-            return 2;
-            break;
-
-        default:
-            return 0;
-            break;
-        }
+        return Colour::getPixelsPerByteForMode(m_mode);
     }
 
 private:

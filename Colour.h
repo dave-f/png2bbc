@@ -32,6 +32,7 @@ public:
     ~Colour() {}
 
     static uint32_t getNumberOfColoursForMode(uint32_t mode);
+    static uint32_t getPixelsPerByteForMode(uint32_t mode);
 
 private:
 
