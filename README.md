@@ -8,13 +8,6 @@ The program reads in a script which defines how the graphics are created.  This 
 ---
 
 ````
-MODE <NUMBER>
-````
-Selects a mode for the graphics (0,1,2,4 or 5).
-
----
-
-````
 IMAGE <filename>
 ````
 Selects a source image to get the graphics data from.
@@ -22,7 +15,14 @@ Selects a source image to get the graphics data from.
 ---
 
 ````
-COLOURS <COLOUR> <COLOUR> ..
+MODE <number>
+````
+Selects a mode for the graphics (0,1,2,4 or 5).
+
+---
+
+````
+COLOURS <colour> <colour> ..
 ````
 Specifies the colours.  Use standard BBC Micro colours, i.e. BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN and WHITE.
 
@@ -31,20 +31,20 @@ Ordering is important here; colours found in the image will be mapped to pixel v
 ---
 
 ````
-CREATE-FILE <filename> FROM-DATA <x> <y> <w> <h> <number-frames> [DATA-ORDER <BLOCK|LINE|PRESHIFTED>]
+CREATE-FILE <filename> FROM-DATA <x> <y> <w> <h> <number-frames> [DATA-ORDER <LINE|PRESHIFTED|BLOCK>]
 ````
 Creates sprite data using the current image, colours and mode.  There is a choice of data output formats:
 
-- Block. Pixels are written out in blocks of 8 down, then another block of 8.  This mimics the BBC Micro's character-based screen layout, so is handy for writing out graphics which are always drawn on character boundaries (e.g. tiles)
-- Line. Pixels are written out just as straight scanlines for normal sprite routines.
+- Line. This is the default. Pixels are written out just as straight scanlines for normal sprite routines.
 - Preshifted. Pixels are written out as above, but preshifted copies are made which will insert the correct amount of empty pixels for the mode (e.g. in mode 5, 4 copies of the sprite are written out).  Files are output with a number on the end to indicate the amount the sprite is shifted by.
+- Block. Pixels are packed into bytes for the required mode, and written out in blocks of 8 down, then another block of 8.  This mimics the BBC Micro's character-based screen layout, so is handy for writing out graphics which are always drawn on character boundaries (e.g. tiles)
 
 ---
 
-For example, to create an `8x8` Mode 5 sprite from co-ords `0,0` in `tile.png` with the default colours:
+For example, to create one `8x8` Mode 5 sprite from co-ords `0,0` in `tile.png` with the default colours:
 ```
 MODE 5
 IMAGE tile.png
 COLOURS BLACK RED YELLOW WHITE
-CREATE-FILE player.bin FROM-DATA 0 0 8 8 1
+CREATE-FILE player.bin FROM-DATA 0 0 8 8 1 DATA-ORDER LINE
 ```
