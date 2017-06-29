@@ -1,0 +1,6 @@
+Debug/
+Release/
+.vs/
+png2bbc.sln
+png2bbc.vcxproj*
+png2bbc.VC.db
