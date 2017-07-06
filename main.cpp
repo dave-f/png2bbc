@@ -198,6 +198,8 @@ bool processScript(const std::string& filename, bool listOutputs=false)
         PixelOrder currentPixelOrder;
         std::string currentPixelOrderStr;
 
+		// ; comment
+		std::regex rxComment(R"([[:space:]]*;.*)");
         // MODE <GRAPHICS MODE>
         std::regex rxModeCommand(R"([[:space:]]*MODE[[:space:]]+([01245]).*)",std::regex_constants::icase);
         // COLOURS <colour>[,...]
@@ -212,7 +214,11 @@ bool processScript(const std::string& filename, bool listOutputs=false)
             ++currentLineNumber;
             std::smatch m;
 
-            if (std::regex_match(currentLine,m,rxModeCommand))
+			if (std::regex_match(currentLine,rxComment))
+			{
+				// Just a comment; ignore
+			}
+            else if (std::regex_match(currentLine,m,rxModeCommand))
             {
                 currentMode = std::stoi(m[1].str());
             }
@@ -339,6 +345,10 @@ bool processScript(const std::string& filename, bool listOutputs=false)
 					std::cout << "Wrote " << outputFile << " (" << frames << " sprite(s); " << currentPixelOrderStr << " format)" << std::endl;
 				}
             }
+			else
+			{
+				throw std::runtime_error("Unrecognised command");
+			}
         }
 
         in.close();
