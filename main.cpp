@@ -363,12 +363,12 @@ bool processScript(const std::string& filename, bool listOutputs=false)
 
 int main(int argc, char** argv)
 {
-    displayTitle();
-
     // With one argument, this must be the script file
     if (argc==2)
     {
-        std::string filename    = argv[1];
+		displayTitle();
+
+		std::string filename = argv[1];
         auto startTime          = std::chrono::steady_clock::now();
 
         if (processScript(filename))
@@ -405,12 +405,14 @@ int main(int argc, char** argv)
 		}
 		else
 		{
+			displayTitle();
 			displayUsage();
 		}
 	}
     else
     {
-        displayUsage();
+		displayTitle();
+		displayUsage();
     }
 
     return 1;
