@@ -30,12 +30,14 @@ void displayUsage()
 }
 
 // Produce a block of data in character row format, useful for tiles
-void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::shared_ptr<std::vector<Colour>> theColours, const std::string& binFile, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numBlocks)
+void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::shared_ptr<std::vector<Colour>> theColours, const std::string& binFile, bool appendMode, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numBlocks)
 {
-    std::fstream outFile(binFile, std::ios::out | std::ios::binary);
-    outFile.exceptions(std::fstream::failbit | std::fstream::badbit);
-
+    std::fstream outFile;
     ScreenByte currentByte(mode);
+    
+    outFile.exceptions(std::fstream::failbit | std::fstream::badbit);
+    outFile.open(binFile, appendMode ? (std::ios::app | std::ios::binary) : (std::ios::out | std::ios::binary));
+
     auto ppb = currentByte.getPixelsPerByte();
 
     if ( w % ppb != 0 )
@@ -90,12 +92,13 @@ void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::sha
 }
 
 // Produce a block of data in line format, useful for sprites
-void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::shared_ptr<std::vector<Colour>> theColours, const std::string& binFile, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numFrames, uint32_t numShifts)
+void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::shared_ptr<std::vector<Colour>> theColours, const std::string& binFile, bool appendMode, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numFrames, uint32_t numShifts)
 {
-    std::fstream outFile(binFile, std::ios::out | std::ios::binary);
-    outFile.exceptions(std::fstream::failbit | std::fstream::badbit);
-
+    std::fstream outFile;
     ScreenByte currentByte(mode);
+
+    outFile.exceptions(std::fstream::failbit | std::fstream::badbit);
+    outFile.open(binFile, appendMode ? (std::ios::app | std::ios::binary) : (std::ios::out | std::ios::binary));
 
     if ( (w % currentByte.getPixelsPerByte()) != 0 )
     {
@@ -198,8 +201,8 @@ bool processScript(const std::string& filename)
         std::regex rxColoursCommand(R"([[:space:]]*COLOURS[[:space:]]+(.*))",std::regex_constants::icase);
         // IMAGE <filename>
         std::regex rxImageCommand(R"([[:space:]]*IMAGE[[:space:]]+([^[:space:]]+).*)",std::regex_constants::icase);
-        // CREATE-FILE <filename> FROM-DATA <x> <y> <w> <h> <num-frames> [DATA-ORDER <BLOCK | LINE | PRESHIFTED>]
-        std::regex rxCreateCommand(R"([[:space:]]*CREATE-FILE[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)([[:space:]]+DATA-ORDER[[:space:]]+(BLOCK|LINE|PRESHIFTED))?.*)",std::regex_constants::icase);
+        // CREATE-FILE / APPEND-FILE <filename> FROM-DATA <x> <y> <w> <h> <num-frames> [DATA-ORDER <BLOCK | LINE | PRESHIFTED>]
+        std::regex rxCreateCommand(R"([[:space:]]*(CREATE-FILE|APPEND-FILE)[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)([[:space:]]+DATA-ORDER[[:space:]]+(BLOCK|LINE|PRESHIFTED))?.*)",std::regex_constants::icase);
 
         while (!in.eof() && std::getline(in, currentLine))
         {
@@ -257,12 +260,20 @@ bool processScript(const std::string& filename)
                     throw std::runtime_error("Too many colours for this mode");
                 }
 
-                auto outputFile   = m[1].str();
-                uint32_t x        = std::stoi(m[2].str());
-                uint32_t y        = std::stoi(m[3].str());
-                uint32_t w        = std::stoi(m[4].str());
-                uint32_t h        = std::stoi(m[5].str());
-                uint32_t frames   = std::stoi(m[6].str());
+                std::string createModeStr = m[1].str();
+
+                for (auto& c : createModeStr)
+                {
+                    c = toupper(c);
+                }
+
+                bool appendMode   = (createModeStr == "APPEND-FILE");
+                auto outputFile   = m[2].str();
+                uint32_t x        = std::stoi(m[3].str());
+                uint32_t y        = std::stoi(m[4].str());
+                uint32_t w        = std::stoi(m[5].str());
+                uint32_t h        = std::stoi(m[6].str());
+                uint32_t frames   = std::stoi(m[7].str());
 
                 if (m[7].str().find("BLOCK") != std::string::npos)
                 {
@@ -282,7 +293,7 @@ bool processScript(const std::string& filename)
 
                 if (currentPixelOrder == PixelOrder::Block)
                 {
-                    processBlock(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames);
+                    processBlock(currentImage, currentMode, currentColours, outputFile, appendMode, x, y, w, h, frames);
                 }
                 else if (currentPixelOrder == PixelOrder::PreshiftedLine)
                 {
@@ -291,15 +302,15 @@ bool processScript(const std::string& filename)
                     for (uint32_t i=0; i<ppb; ++i)
                     {
                         std::string thisOutputFile = outputFile + "_" + std::to_string(i);
-                        processSprite(currentImage, currentMode, currentColours, thisOutputFile, x, y, w, h, frames, i);
+                        processSprite(currentImage, currentMode, currentColours, thisOutputFile, appendMode, x, y, w, h, frames, i);
                     }
                 }
                 else
                 {
-                    processSprite(currentImage, currentMode, currentColours, outputFile, x, y, w, h, frames, 0);
+                    processSprite(currentImage, currentMode, currentColours, outputFile, appendMode, x, y, w, h, frames, 0);
                 }
 
-                std::cout << "Built " << outputFile << " (" << frames << " sprite(s); " << currentPixelOrderStr << ")" << std::endl;
+                std::cout << "Wrote " << outputFile << " (" << frames << " sprite(s); " << currentPixelOrderStr << " format)" << std::endl;
             }
         }
 
