@@ -3,7 +3,9 @@ A tool for creating BBC Micro graphics.  Reads PNG files and outputs binary data
 
 No external dependencies are required, just a C++11 compiler.
 
-The program reads in a script which defines how the graphics are created.  This script is built up of 4 very simple commands, which are detailed below.
+The program reads in a script which defines what output files to create and how to create them.  With the `-l` switch, `png2bbc` will just list these output files without making them, so you can include them as dependencies in your makefile.
+
+The script is built up of 4 very simple commands, which are detailed below.
 
 ---
 
@@ -37,7 +39,9 @@ Creates sprite data using the current image, colours and mode.  There is a choic
 
 - Line. This is the default. Pixels are written out just as straight scanlines for normal sprite routines.
 - Preshifted. Pixels are written out as above, but preshifted copies are made which will insert the correct amount of empty pixels for the mode (e.g. in mode 5, 4 copies of the sprite are written out).  Files are output with a number on the end to indicate the amount the sprite is shifted by.
-- Block. Pixels are packed into bytes for the required mode, and written out in blocks of 8 down, then another block of 8.  This mimics the BBC Micro's character-based screen layout, so is handy for writing out graphics which are always drawn on character boundaries (e.g. tiles)
+- Block. Pixels are packed into bytes for the required mode, and written out in blocks of 8 down, then another block of 8.  This mimics the BBC Micro's character-based screen layout, so is handy for writing out graphics which are always drawn on character boundaries (e.g. tiles), or creating data which will be directly loaded to the screen.
+
+Instead of `CREATE-FILE` you can use `APPEND-FILE` which has the same syntax but appends data to a file rather than create a new one. This is useful if you want to keep graphics data together which is made from separate regions in the source image.
 
 ---
 
