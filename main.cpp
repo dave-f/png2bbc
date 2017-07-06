@@ -25,8 +25,11 @@ void displayTitle()
 
 void displayUsage()
 {
-    std::cout << "A utility to create BBC micro sprites from PNG images" << std::endl;
-    std::cout << "Usage: png2bbc <scriptfile>" << std::endl;
+	std::cout << "A utility to create BBC micro sprites from PNG images" << std::endl << std::endl;
+	std::cout << "Usage: " << std::endl;
+	std::cout << "        png2bbc[-l] <scriptfile>" << std::endl;
+	std::cout << "Options:" << std::endl;
+	std::cout << "        -l : List outputs from scriptfile, but do not generate them" << std::endl;
 }
 
 // Produce a block of data in character row format, useful for tiles
@@ -172,7 +175,7 @@ void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::sh
     outFile.close();
 }
 
-bool processScript(const std::string& filename)
+bool processScript(const std::string& filename, bool listOutputs=false)
 {
     bool r(false);
     uint32_t currentLineNumber = 0;
@@ -275,12 +278,12 @@ bool processScript(const std::string& filename)
                 uint32_t h        = std::stoi(m[6].str());
                 uint32_t frames   = std::stoi(m[7].str());
 
-                if (m[7].str().find("BLOCK") != std::string::npos)
+                if (m[8].str().find("BLOCK") != std::string::npos)
                 {
                     currentPixelOrder = PixelOrder::Block;
                     currentPixelOrderStr = "Block";
                 }
-                else if (m[7].str().find("PRESHIFTED") != std::string::npos)
+                else if (m[8].str().find("PRESHIFTED") != std::string::npos)
                 {
                     currentPixelOrder = PixelOrder::PreshiftedLine;
                     currentPixelOrderStr = "Preshifted";
@@ -293,7 +296,14 @@ bool processScript(const std::string& filename)
 
                 if (currentPixelOrder == PixelOrder::Block)
                 {
-                    processBlock(currentImage, currentMode, currentColours, outputFile, appendMode, x, y, w, h, frames);
+					if (listOutputs)
+					{
+						std::cout << " " << outputFile;
+					}
+					else
+					{
+						processBlock(currentImage, currentMode, currentColours, outputFile, appendMode, x, y, w, h, frames);
+					}
                 }
                 else if (currentPixelOrder == PixelOrder::PreshiftedLine)
                 {
@@ -302,15 +312,32 @@ bool processScript(const std::string& filename)
                     for (uint32_t i=0; i<ppb; ++i)
                     {
                         std::string thisOutputFile = outputFile + "_" + std::to_string(i);
-                        processSprite(currentImage, currentMode, currentColours, thisOutputFile, appendMode, x, y, w, h, frames, i);
+
+						if (listOutputs)
+						{
+							std::cout << " " << thisOutputFile;
+						}
+						else
+						{
+							processSprite(currentImage, currentMode, currentColours, thisOutputFile, appendMode, x, y, w, h, frames, i);
+						}
                     }
                 }
                 else
                 {
-                    processSprite(currentImage, currentMode, currentColours, outputFile, appendMode, x, y, w, h, frames, 0);
+					if (listOutputs)
+					{
+						std::cout << " " << outputFile;
+					}
+					{
+						processSprite(currentImage, currentMode, currentColours, outputFile, appendMode, x, y, w, h, frames, 0);
+					}
                 }
 
-                std::cout << "Wrote " << outputFile << " (" << frames << " sprite(s); " << currentPixelOrderStr << " format)" << std::endl;
+				if (!listOutputs)
+				{
+					std::cout << "Wrote " << outputFile << " (" << frames << " sprite(s); " << currentPixelOrderStr << " format)" << std::endl;
+				}
             }
         }
 
@@ -338,7 +365,7 @@ int main(int argc, char** argv)
 {
     displayTitle();
 
-    // We currently only accept one argument; the script file
+    // With one argument, this must be the script file
     if (argc==2)
     {
         std::string filename    = argv[1];
@@ -352,6 +379,35 @@ int main(int argc, char** argv)
             return 0;
         }
     }
+	// With two arguments, we should be being asked to list outputs
+	else if (argc == 3)
+	{
+		std::string filename;
+		std::string argOne = argv[1];
+		std::string argTwo = argv[2];
+		bool argOK = false;
+
+		if (argOne=="-l" || argOne=="-L")
+		{
+			filename = argTwo;
+			argOK = true;
+		}
+		else if (argTwo == "-l" || argTwo=="-L")
+		{
+			filename = argOne;
+			argOK = true;
+		}
+
+		if (argOK)
+		{
+			processScript(filename, true);
+			std::cout << std::endl;
+		}
+		else
+		{
+			displayUsage();
+		}
+	}
     else
     {
         displayUsage();
