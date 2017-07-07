@@ -4,12 +4,13 @@
 #include <memory>
 #include <chrono>
 #include <regex>
+#include <set>
 
 #include "Image.h"
 #include "ScreenByte.h"
 
 // Build on g++ with -std=c++11
-static constexpr char versionString[] = "1.4";
+static constexpr char versionString[] = "1.6";
 
 enum class PixelOrder : uint8_t
 {
@@ -25,11 +26,11 @@ void displayTitle()
 
 void displayUsage()
 {
-	std::cout << "A utility to create BBC micro sprites from PNG images" << std::endl << std::endl;
-	std::cout << "Usage: " << std::endl;
-	std::cout << "        png2bbc[-l] <scriptfile>" << std::endl;
-	std::cout << "Options:" << std::endl;
-	std::cout << "        -l : List outputs from scriptfile, but do not generate them" << std::endl;
+    std::cout << "A utility to create BBC micro sprites from PNG images" << std::endl;
+    std::cout << "Usage: " << std::endl;
+    std::cout << "        png2bbc[-l] <scriptfile>" << std::endl;
+    std::cout << "Options:" << std::endl;
+    std::cout << "        -l : List outputs from scriptfile, but do not generate them" << std::endl;
 }
 
 // Produce a block of data in character row format, useful for tiles
@@ -175,7 +176,7 @@ void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::sh
     outFile.close();
 }
 
-bool processScript(const std::string& filename, bool listOutputs=false)
+bool processScript(const std::string& filename, std::set<std::string>& outputs, bool buildFiles)
 {
     bool r(false);
     uint32_t currentLineNumber = 0;
@@ -198,8 +199,8 @@ bool processScript(const std::string& filename, bool listOutputs=false)
         PixelOrder currentPixelOrder;
         std::string currentPixelOrderStr;
 
-		// ; comment
-		std::regex rxComment(R"([[:space:]]*;.*)");
+        // COMMENT or BLANK LINE
+        std::regex rxIgnore(R"(([[:space:]]*|[[:space:]]*;.*))");
         // MODE <GRAPHICS MODE>
         std::regex rxModeCommand(R"([[:space:]]*MODE[[:space:]]+([01245]).*)",std::regex_constants::icase);
         // COLOURS <colour>[,...]
@@ -214,10 +215,10 @@ bool processScript(const std::string& filename, bool listOutputs=false)
             ++currentLineNumber;
             std::smatch m;
 
-			if (std::regex_match(currentLine,rxComment))
-			{
-				// Just a comment; ignore
-			}
+            if (std::regex_match(currentLine,rxIgnore))
+            {
+                // Just a comment or an empty line; ignore
+            }
             else if (std::regex_match(currentLine,m,rxModeCommand))
             {
                 currentMode = std::stoi(m[1].str());
@@ -302,14 +303,12 @@ bool processScript(const std::string& filename, bool listOutputs=false)
 
                 if (currentPixelOrder == PixelOrder::Block)
                 {
-					if (listOutputs)
-					{
-						std::cout << " " << outputFile;
-					}
-					else
-					{
-						processBlock(currentImage, currentMode, currentColours, outputFile, appendMode, x, y, w, h, frames);
-					}
+                    outputs.insert(outputFile);
+
+                    if (buildFiles)
+                    {
+                        processBlock(currentImage, currentMode, currentColours, outputFile, appendMode, x, y, w, h, frames);
+                    }
                 }
                 else if (currentPixelOrder == PixelOrder::PreshiftedLine)
                 {
@@ -318,37 +317,33 @@ bool processScript(const std::string& filename, bool listOutputs=false)
                     for (uint32_t i=0; i<ppb; ++i)
                     {
                         std::string thisOutputFile = outputFile + "_" + std::to_string(i);
+                        outputs.insert(thisOutputFile);
 
-						if (listOutputs)
-						{
-							std::cout << " " << thisOutputFile;
-						}
-						else
-						{
-							processSprite(currentImage, currentMode, currentColours, thisOutputFile, appendMode, x, y, w, h, frames, i);
-						}
+                        if (buildFiles)
+                        {
+                            processSprite(currentImage, currentMode, currentColours, thisOutputFile, appendMode, x, y, w, h, frames, i);
+                        }
                     }
                 }
                 else
                 {
-					if (listOutputs)
-					{
-						std::cout << " " << outputFile;
-					}
-					{
-						processSprite(currentImage, currentMode, currentColours, outputFile, appendMode, x, y, w, h, frames, 0);
-					}
+                    outputs.insert(outputFile);
+
+                    if (buildFiles)
+                    {
+                        processSprite(currentImage, currentMode, currentColours, outputFile, appendMode, x, y, w, h, frames, 0);
+                    }
                 }
 
-				if (!listOutputs)
-				{
-					std::cout << "Wrote " << outputFile << " (" << frames << " sprite(s); " << currentPixelOrderStr << " format)" << std::endl;
-				}
+                if (buildFiles)
+                {
+                    std::cout << "Wrote " << frames << " sprite(s) (" << currentPixelOrderStr << " format) to " << outputFile << std::endl;
+                }
             }
-			else
-			{
-				throw std::runtime_error("Unrecognised command");
-			}
+            else
+            {
+                throw std::runtime_error("Unrecognised command");
+            }
         }
 
         in.close();
@@ -376,53 +371,62 @@ int main(int argc, char** argv)
     // With one argument, this must be the script file
     if (argc==2)
     {
-		displayTitle();
+        displayTitle();
 
-		std::string filename = argv[1];
-        auto startTime          = std::chrono::steady_clock::now();
+        std::string filename = argv[1];
+        auto startTime = std::chrono::steady_clock::now();
+        std::set<std::string> outputs;
 
-        if (processScript(filename))
+        if (processScript(filename,outputs,true))
         {
             auto msTaken = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count();
-            std::cout << "Finished in " << msTaken << "ms" << std::endl;
+            std::cout << outputs.size() << " file(s) created in " << msTaken << "ms" << std::endl;
 
             return 0;
         }
     }
-	// With two arguments, we should be being asked to list outputs
-	else if (argc == 3)
-	{
-		std::string filename;
-		std::string argOne = argv[1];
-		std::string argTwo = argv[2];
-		bool argOK = false;
+    // With two arguments, we should be being asked to list outputs
+    else if (argc == 3)
+    {
+        std::string filename;
+        std::string argOne = argv[1];
+        std::string argTwo = argv[2];
+        bool argOK = false;
 
-		if (argOne=="-l" || argOne=="-L")
-		{
-			filename = argTwo;
-			argOK = true;
-		}
-		else if (argTwo == "-l" || argTwo=="-L")
-		{
-			filename = argOne;
-			argOK = true;
-		}
+        if (argOne=="-l" || argOne=="-L")
+        {
+            filename = argTwo;
+            argOK = true;
+        }
+        else if (argTwo == "-l" || argTwo=="-L")
+        {
+            filename = argOne;
+            argOK = true;
+        }
 
-		if (argOK)
-		{
-			processScript(filename, true);
-			std::cout << std::endl;
-		}
-		else
-		{
-			displayTitle();
-			displayUsage();
-		}
-	}
+        if (argOK)
+        {
+            std::set<std::string> outputs;
+
+            if (processScript(filename, outputs, false))
+            {
+                for (const auto& i : outputs)
+                {
+                    std::cout << " " << i;
+                }
+            }
+            std::cout << std::endl;
+        }
+        else
+        {
+            displayTitle();
+            displayUsage();
+        }
+    }
     else
     {
-		displayTitle();
-		displayUsage();
+        displayTitle();
+        displayUsage();
     }
 
     return 1;
