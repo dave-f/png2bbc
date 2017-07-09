@@ -1,7 +1,7 @@
 # png2bbc
 A tool for creating BBC Micro graphics.  Reads PNG files and outputs binary data suitable for `INCBIN` to 6502 source.  
 
-No external dependencies are required, just a C++11 compiler.
+No external dependencies are required, just a C++11 compiler.  Tested on gcc version 5.4.0.
 
 The program reads in a script which defines what output files to create and how to create them.  With the `-l` switch, `png2bbc` will just list these output files without making them, so you can easily include them as dependencies in your makefile.
 
