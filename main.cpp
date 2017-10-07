@@ -201,7 +201,7 @@ bool processScript(const std::string& filename, std::set<std::string>& outputs, 
         std::string currentPixelOrderStr;
 
         // COMMENT or BLANK LINE
-        std::regex rxIgnore(R"(([[:space:]]*|[[:space:]]*;.*))");
+        std::regex rxIgnore(R"(([[:space:]]*;.*|[[:space:]]*))");
         // MODE <GRAPHICS MODE>
         std::regex rxModeCommand(R"([[:space:]]*MODE[[:space:]]+([01245]).*)",std::regex_constants::icase);
         // COLOURS <colour>[,...]
