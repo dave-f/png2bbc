@@ -11,7 +11,7 @@
 #include "ScreenByte.h"
 
 // Build on g++ with -std=c++11
-static constexpr char versionString[] = "1.6";
+static constexpr char versionString[] = "1.7";
 
 enum class PixelOrder : uint8_t
 {
@@ -27,9 +27,9 @@ void displayTitle()
 
 void displayUsage()
 {
-    std::cout << "A utility to create BBC micro sprites from PNG images" << std::endl;
+	std::cout << "A utility to create BBC micro sprites from PNG images" << std::endl << std::endl;
     std::cout << "Usage: " << std::endl;
-    std::cout << "        png2bbc[-l] <scriptfile>" << std::endl;
+    std::cout << "        png2bbc [-l] <scriptfile>" << std::endl;
     std::cout << "Options:" << std::endl;
     std::cout << "        -l : List outputs from scriptfile, but do not generate them" << std::endl;
 }
