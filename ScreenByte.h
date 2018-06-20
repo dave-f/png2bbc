@@ -13,10 +13,10 @@ public:
 
     static constexpr std::array<uint8_t, 2> twoColourModeValues      = { 0, 1 };
     static constexpr std::array<uint8_t, 4> fourColourModeValues     = { 0b00000, 0b00001, 0b10000, 0b10001 };
-	static constexpr std::array<uint8_t, 16> sixteenColourModeValues = { 0b00000000, 0b00000001, 0b00000100, 0b00000101, 0b00010000, 0b00010001, 0b00010100, 0b00010101, 
-		0b01000000, 0b01000001, 0b01000100, 0b01000101, 0b01010000, 0b01010001, 0b01010100, 0b01010101 };
+    static constexpr std::array<uint8_t, 16> sixteenColourModeValues = { 0b00000000, 0b00000001, 0b00000100, 0b00000101, 0b00010000, 0b00010001, 0b00010100, 0b00010101, 
+                                                                         0b01000000, 0b01000001, 0b01000100, 0b01000101, 0b01010000, 0b01010001, 0b01010100, 0b01010101 };
 
-	bool addPixel(uint8_t pixelValue)
+    bool addPixel(uint8_t pixelValue)
     {
         if (pixelValue > Colour::getNumberOfColoursForMode(m_mode))
         {

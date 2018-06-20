@@ -28,7 +28,7 @@ void displayTitle()
 
 void displayUsage()
 {
-	std::cout << "A utility to create BBC micro sprites from PNG images" << std::endl << std::endl;
+    std::cout << "A utility to create BBC micro sprites from PNG images" << std::endl << std::endl;
     std::cout << "Usage: " << std::endl;
     std::cout << "        png2bbc [-l] <scriptfile>" << std::endl;
     std::cout << "Options:" << std::endl;
@@ -70,31 +70,31 @@ void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::sha
                     for (uint32_t m = 0; m<ppb; ++m)
                     {
                         auto thisPixel = theImage->getPixel(x + (i*ppb)+m, y + (j*8)+n);
-						bool usingCustomColour = false;
-						ptrdiff_t s;
+                        bool usingCustomColour = false;
+                        ptrdiff_t s;
 
-						// Custom colours take precedence so look at these first
-						auto customIt = customColours->find(thisPixel.getRawRGB());
+                        // Custom colours take precedence so look at these first
+                        auto customIt = customColours->find(thisPixel.getRawRGB());
 
-						if (customIt != customColours->end())
-						{
-							s = customIt->second;
-							usingCustomColour = true;
-						}
+                        if (customIt != customColours->end())
+                        {
+                            s = customIt->second;
+                            usingCustomColour = true;
+                        }
 
-						if (!usingCustomColour)
-						{
-							auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
+                        if (!usingCustomColour)
+                        {
+                            auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
 
-							if (it != theColours->end())
-							{
-								s = std::distance(theColours->begin(), it);
-							}
-							else
-							{
-								throw std::runtime_error("Unsupported colour");
-							}
-						}
+                            if (it != theColours->end())
+                            {
+                                s = std::distance(theColours->begin(), it);
+                            }
+                            else
+                            {
+                                throw std::runtime_error("Unsupported colour");
+                            }
+                        }
 
                         if (currentByte.addPixel(s))
                         {
@@ -211,7 +211,7 @@ bool processScript(const std::string& filename, std::set<std::string>& outputs, 
         std::shared_ptr<Image> currentImage;
         int8_t currentMode(-1);
         std::shared_ptr<std::vector<Colour>> currentColours = std::make_shared<std::vector<Colour>>();
-		std::shared_ptr<std::map<uint32_t,uint8_t>> customColours = std::make_shared<std::map<uint32_t, uint8_t>>();
+        std::shared_ptr<std::map<uint32_t,uint8_t>> customColours = std::make_shared<std::map<uint32_t, uint8_t>>();
         PixelOrder currentPixelOrder;
         std::string currentPixelOrderStr;
 
@@ -225,8 +225,8 @@ bool processScript(const std::string& filename, std::set<std::string>& outputs, 
         std::regex rxImageCommand(R"([[:space:]]*IMAGE[[:space:]]+([^[:space:]]+).*)",std::regex_constants::icase);
         // CREATE-FILE / APPEND-FILE <filename> FROM-DATA <x> <y> <w> <h> <num-frames> [DATA-ORDER <BLOCK | LINE | PRESHIFTED>]
         std::regex rxCreateCommand(R"([[:space:]]*(CREATE-FILE|APPEND-FILE)[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)([[:space:]]+DATA-ORDER[[:space:]]+(BLOCK|LINE|PRESHIFTED))?.*)",std::regex_constants::icase);
-		// CUSTOM-COLOUR <hex-colour> <colour number>
-		std::regex rxCustomColourCommand(R"([[:space:]]*CUSTOM-COLOUR[[:space:]]+([[:xdigit:]]{6})[[:space:]]+([0-9]{1,2}).*)");
+        // CUSTOM-COLOUR <hex-colour> <colour number>
+        std::regex rxCustomColourCommand(R"([[:space:]]*CUSTOM-COLOUR[[:space:]]+([[:xdigit:]]{6})[[:space:]]+([0-9]{1,2}).*)");
 
         while (!in.eof() && std::getline(in, currentLine))
         {
@@ -249,7 +249,7 @@ bool processScript(const std::string& filename, std::set<std::string>& outputs, 
                 auto se = std::sregex_iterator();
 
                 currentColours->clear();
-				customColours->clear();
+                customColours->clear();
 
                 for (auto i = s; i !=se; ++i)
                 {
@@ -263,17 +263,17 @@ bool processScript(const std::string& filename, std::set<std::string>& outputs, 
                     currentColours->push_back(Colour(upperString));
                 }
             }
-			else if (std::regex_match(currentLine,m,rxCustomColourCommand))
-			{
-				uint32_t colour;
-				auto value = std::stoi(m[2].str());
+            else if (std::regex_match(currentLine,m,rxCustomColourCommand))
+            {
+                uint32_t colour;
+                auto value = std::stoi(m[2].str());
 
-				std::stringstream ss;
-				ss << std::hex << m[1].str();
-				ss >> colour;
+                std::stringstream ss;
+                ss << std::hex << m[1].str();
+                ss >> colour;
 
-				customColours->insert_or_assign(colour,value);
-			}
+                customColours->insert_or_assign(colour,value);
+            }
             else if (std::regex_match(currentLine,m,rxImageCommand))
             {
                 currentImage = std::make_shared<Image>(m[1].str());

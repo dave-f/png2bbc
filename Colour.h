@@ -31,10 +31,10 @@ public:
     Colour(uint32_t rawRGBA) = delete;
     ~Colour() {}
 
-	uint32_t getRawRGB() const
-	{
-		return static_cast<uint32_t>(m_internalColour);
-	}
+    uint32_t getRawRGB() const
+    {
+        return static_cast<uint32_t>(m_internalColour);
+    }
 
     static uint32_t getNumberOfColoursForMode(uint32_t mode);
     static uint32_t getPixelsPerByteForMode(uint32_t mode);
