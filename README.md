@@ -5,7 +5,7 @@ No external dependencies are required, just a C++11 compiler.  Tested on gcc ver
 
 The program reads in a script which defines what output files to create and how to create them.  With the `-l` switch, `png2bbc` will just list these output files without making them, so you can easily include them as dependencies in your makefile.
 
-The script is built up of 4 very simple commands, which are detailed below.  Any lines starting with a `;` are considered comments.
+The script is built up of 5 very simple commands, which are detailed below.  Any lines starting with a `;` are considered comments.
 
 ---
 
@@ -29,6 +29,13 @@ COLOURS <colour> <colour> ..
 Specifies the colours.  Use standard BBC Micro colours, i.e. BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN and WHITE.
 
 Ordering is important here; colours found in the image will be mapped to pixel values corresponding to their order in this list.  For example, if RED is the second item in the list, any red found in the image will be written as pixel value 2 (actually 1, since it's  zero-based).
+
+---
+
+````
+CUSTOM-COLOUR <RGB> <number>
+````
+Overrides any colour.  This is useful if you have special RGB values in your source image you want to map to specific pixel values (e.g. using grey for masks).  Custom colours take precedence over normal colours and are reset on the next `COLOURS` command.
 
 ---
 

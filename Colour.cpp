@@ -69,7 +69,7 @@ uint32_t Colour::getNumberOfColoursForMode(uint32_t mode)
             break;
 
         case 2:
-            return 8;
+            return 16;
             break;
 
         default:

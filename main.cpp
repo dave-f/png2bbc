@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <sstream>
 #include <memory>
 #include <chrono>
 #include <regex>
@@ -11,7 +12,7 @@
 #include "ScreenByte.h"
 
 // Build on g++ with -std=c++11
-static constexpr char versionString[] = "1.7";
+static constexpr char versionString[] = "1.8";
 
 enum class PixelOrder : uint8_t
 {
@@ -35,7 +36,7 @@ void displayUsage()
 }
 
 // Produce a block of data in character row format, useful for tiles
-void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::shared_ptr<std::vector<Colour>> theColours, const std::string& binFile, bool appendMode, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numBlocks)
+void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::shared_ptr<std::vector<Colour>> theColours, std::shared_ptr<std::map<uint32_t, uint8_t>> customColours, const std::string& binFile, bool appendMode, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numBlocks)
 {
     std::fstream outFile;
     ScreenByte currentByte(mode);
@@ -69,18 +70,31 @@ void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::sha
                     for (uint32_t m = 0; m<ppb; ++m)
                     {
                         auto thisPixel = theImage->getPixel(x + (i*ppb)+m, y + (j*8)+n);
-                        auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
+						bool usingCustomColour = false;
+						ptrdiff_t s;
 
-                        ptrdiff_t s;
+						// Custom colours take precedence so look at these first
+						auto customIt = customColours->find(thisPixel.getRawRGB());
 
-                        if (it != theColours->end())
-                        {
-                            s = std::distance(theColours->begin(), it);
-                        }
-                        else
-                        {
-                            throw std::runtime_error("Unsupported colour");
-                        }
+						if (customIt != customColours->end())
+						{
+							s = customIt->second;
+							usingCustomColour = true;
+						}
+
+						if (!usingCustomColour)
+						{
+							auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
+
+							if (it != theColours->end())
+							{
+								s = std::distance(theColours->begin(), it);
+							}
+							else
+							{
+								throw std::runtime_error("Unsupported colour");
+							}
+						}
 
                         if (currentByte.addPixel(s))
                         {
@@ -97,7 +111,7 @@ void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::sha
 }
 
 // Produce a block of data in line format, useful for sprites
-void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::shared_ptr<std::vector<Colour>> theColours, const std::string& binFile, bool appendMode, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numFrames, uint32_t numShifts)
+void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::shared_ptr<std::vector<Colour>> theColours, std::shared_ptr<std::map<uint32_t,uint8_t>> customColours, const std::string& binFile, bool appendMode, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numFrames, uint32_t numShifts)
 {
     std::fstream outFile;
     ScreenByte currentByte(mode);
@@ -197,6 +211,7 @@ bool processScript(const std::string& filename, std::set<std::string>& outputs, 
         std::shared_ptr<Image> currentImage;
         int8_t currentMode(-1);
         std::shared_ptr<std::vector<Colour>> currentColours = std::make_shared<std::vector<Colour>>();
+		std::shared_ptr<std::map<uint32_t,uint8_t>> customColours = std::make_shared<std::map<uint32_t, uint8_t>>();
         PixelOrder currentPixelOrder;
         std::string currentPixelOrderStr;
 
@@ -210,6 +225,8 @@ bool processScript(const std::string& filename, std::set<std::string>& outputs, 
         std::regex rxImageCommand(R"([[:space:]]*IMAGE[[:space:]]+([^[:space:]]+).*)",std::regex_constants::icase);
         // CREATE-FILE / APPEND-FILE <filename> FROM-DATA <x> <y> <w> <h> <num-frames> [DATA-ORDER <BLOCK | LINE | PRESHIFTED>]
         std::regex rxCreateCommand(R"([[:space:]]*(CREATE-FILE|APPEND-FILE)[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)([[:space:]]+DATA-ORDER[[:space:]]+(BLOCK|LINE|PRESHIFTED))?.*)",std::regex_constants::icase);
+		// CUSTOM-COLOUR <hex-colour> <colour number>
+		std::regex rxCustomColourCommand(R"([[:space:]]*CUSTOM-COLOUR[[:space:]]+([[:xdigit:]]{6})[[:space:]]+([0-9]{1,2}).*)");
 
         while (!in.eof() && std::getline(in, currentLine))
         {
@@ -232,6 +249,7 @@ bool processScript(const std::string& filename, std::set<std::string>& outputs, 
                 auto se = std::sregex_iterator();
 
                 currentColours->clear();
+				customColours->clear();
 
                 for (auto i = s; i !=se; ++i)
                 {
@@ -245,6 +263,17 @@ bool processScript(const std::string& filename, std::set<std::string>& outputs, 
                     currentColours->push_back(Colour(upperString));
                 }
             }
+			else if (std::regex_match(currentLine,m,rxCustomColourCommand))
+			{
+				uint32_t colour;
+				auto value = std::stoi(m[2].str());
+
+				std::stringstream ss;
+				ss << std::hex << m[1].str();
+				ss >> colour;
+
+				customColours->insert_or_assign(colour,value);
+			}
             else if (std::regex_match(currentLine,m,rxImageCommand))
             {
                 currentImage = std::make_shared<Image>(m[1].str());
@@ -308,7 +337,7 @@ bool processScript(const std::string& filename, std::set<std::string>& outputs, 
 
                     if (buildFiles)
                     {
-                        processBlock(currentImage, currentMode, currentColours, outputFile, appendMode, x, y, w, h, frames);
+                        processBlock(currentImage, currentMode, currentColours, customColours, outputFile, appendMode, x, y, w, h, frames);
                     }
                 }
                 else if (currentPixelOrder == PixelOrder::PreshiftedLine)
@@ -322,7 +351,7 @@ bool processScript(const std::string& filename, std::set<std::string>& outputs, 
 
                         if (buildFiles)
                         {
-                            processSprite(currentImage, currentMode, currentColours, thisOutputFile, appendMode, x, y, w, h, frames, i);
+                            processSprite(currentImage, currentMode, currentColours, customColours, thisOutputFile, appendMode, x, y, w, h, frames, i);
                         }
                     }
                 }
@@ -332,7 +361,7 @@ bool processScript(const std::string& filename, std::set<std::string>& outputs, 
 
                     if (buildFiles)
                     {
-                        processSprite(currentImage, currentMode, currentColours, outputFile, appendMode, x, y, w, h, frames, 0);
+                        processSprite(currentImage, currentMode, currentColours, customColours, outputFile, appendMode, x, y, w, h, frames, 0);
                     }
                 }
 
