@@ -40,6 +40,23 @@ Colour::Colour(uint8_t r, uint8_t g, uint8_t b)
     }
 }
 
+Colour::Colour(uint32_t rawRGB)
+{
+	uint32_t key = (rawRGB << 8) | 0xff;
+
+	auto it = m_colourMap.find(key);
+
+	if (it != m_colourMap.end())
+	{
+		m_internalColour = it->second;
+	}
+	else
+	{
+		throw std::runtime_error("Invalid BBC Colour");
+	}
+}
+
+
 Colour::Colour(const std::string& colourName)
 {
     auto it = m_colourMapStr.find(colourName);

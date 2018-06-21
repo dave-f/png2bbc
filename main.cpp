@@ -12,7 +12,7 @@
 #include "ScreenByte.h"
 
 // Build on g++ with -std=c++11
-static constexpr char versionString[] = "1.8";
+static constexpr char versionString[] = "1.9";
 
 enum class PixelOrder : uint8_t
 {
@@ -85,7 +85,7 @@ void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::sha
 
 						if (!usingCustomColour)
 						{
-							auto thisPixel = theImage->getPixel(x + (i*ppb) + m, y + (j * 8) + n);
+							Colour thisPixel(thisPixelRGB);
 
                             auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
 
@@ -171,7 +171,7 @@ void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::sh
 
 				if (!usingCustomColour)
 				{
-					auto thisPixel = theImage->getPixel(i, j);
+					Colour thisPixel(thisPixelRGB);
 
 					// The colour must be expected
 					auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
