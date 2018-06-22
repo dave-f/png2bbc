@@ -247,8 +247,18 @@ bool processScript(const std::string& filename, std::set<std::string>& outputs, 
         // CUSTOM-COLOUR <hex-colour> <colour number>
         std::regex rxCustomColourCommand(R"([[:space:]]*CUSTOM-COLOUR[[:space:]]+([[:xdigit:]]{6})[[:space:]]+([0-9]{1,2}).*)");
 
-        while (!in.eof() && std::getline(in, currentLine))
+        auto delim = (char) 0xa;
+        auto carriageReturn = (char) 0xd;
+
+        while (!in.eof() && std::getline(in, currentLine, delim))
         {
+            std::string::size_type pos;
+
+            while ((pos = currentLine.find(carriageReturn)) != std::string::npos)
+            {
+                currentLine.erase(pos,pos+1);
+            }
+
             ++currentLineNumber;
             std::smatch m;
 
