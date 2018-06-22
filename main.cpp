@@ -69,23 +69,23 @@ void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::sha
                 {
                     for (uint32_t m = 0; m<ppb; ++m)
                     {
-						auto thisPixelRGB = theImage->getPixelRGB(x + (i*ppb) + m, y + (j * 8) + n);
+                        auto thisPixelRGB = theImage->getPixelRGB(x + (i*ppb) + m, y + (j * 8) + n);
 
-						bool usingCustomColour = false;
-						ptrdiff_t s;
+                        bool usingCustomColour = false;
+                        ptrdiff_t s;
 
-						// Custom colours take precedence so look at these first
-						auto customIt = customColours->find(thisPixelRGB);
+                        // Custom colours take precedence so look at these first
+                        auto customIt = customColours->find(thisPixelRGB);
 
-						if (customIt != customColours->end())
-						{
-							s = customIt->second;
-							usingCustomColour = true;
-						}
+                        if (customIt != customColours->end())
+                        {
+                            s = customIt->second;
+                            usingCustomColour = true;
+                        }
 
-						if (!usingCustomColour)
-						{
-							Colour thisPixel(thisPixelRGB);
+                        if (!usingCustomColour)
+                        {
+                            Colour thisPixel(thisPixelRGB);
 
                             auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
 
@@ -155,43 +155,43 @@ void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::sh
 
             for (uint32_t i = x; i < x + w; ++i)
             {
-				auto thisPixelRGB = theImage->getPixelRGB(i,j);
+                auto thisPixelRGB = theImage->getPixelRGB(i,j);
 
-				bool usingCustomColour = false;
-				ptrdiff_t s;
+                bool usingCustomColour = false;
+                ptrdiff_t s;
 
-				// Custom colours take precedence so look at these first
-				auto customIt = customColours->find(thisPixelRGB);
+                // Custom colours take precedence so look at these first
+                auto customIt = customColours->find(thisPixelRGB);
 
-				if (customIt != customColours->end())
-				{
-					s = customIt->second;
-					usingCustomColour = true;
-				}
+                if (customIt != customColours->end())
+                {
+                    s = customIt->second;
+                    usingCustomColour = true;
+                }
 
-				if (!usingCustomColour)
-				{
-					Colour thisPixel(thisPixelRGB);
+                if (!usingCustomColour)
+                {
+                    Colour thisPixel(thisPixelRGB);
 
-					// The colour must be expected
-					auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
+                    // The colour must be expected
+                    auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
 
-					if (it != theColours->end())
-					{
-						s = std::distance(theColours->begin(), it);
-					}
-					else
-					{
-						throw std::runtime_error("Unsupported colour");
-					}
-				}
+                    if (it != theColours->end())
+                    {
+                        s = std::distance(theColours->begin(), it);
+                    }
+                    else
+                    {
+                        throw std::runtime_error("Unsupported colour");
+                    }
+                }
 
-				if (currentByte.addPixel(s))
-				{
-					auto theByte = currentByte.readByte();
+                if (currentByte.addPixel(s))
+                {
+                    auto theByte = currentByte.readByte();
 
-					outFile.write(reinterpret_cast<const char*>(&theByte), 1);
-				}
+                    outFile.write(reinterpret_cast<const char*>(&theByte), 1);
+                }
             }
 
             // Check if theres any residual pixels to write
