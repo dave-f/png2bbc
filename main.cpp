@@ -199,7 +199,7 @@ void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::sh
             {
                 while (!currentByte.addPixel(blackPixelValue))
                     ;
-                
+
                 auto theByte = currentByte.readByte();
                 outFile.write(reinterpret_cast<const char*>(&theByte),1);
             }
@@ -291,7 +291,7 @@ bool processScript(const std::string& filename, std::set<std::string>& outputs, 
                 ss << std::hex << m[1].str();
                 ss >> colour;
 
-                customColours->insert_or_assign(colour,value);
+                (*customColours)[colour] = value;
             }
             else if (std::regex_match(currentLine,m,rxImageCommand))
             {
