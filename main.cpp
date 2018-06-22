@@ -256,7 +256,7 @@ bool processScript(const std::string& filename, std::set<std::string>& outputs, 
 
             while ((pos = currentLine.find(carriageReturn)) != std::string::npos)
             {
-                currentLine.erase(pos,pos+1);
+                currentLine.erase(pos,1);
             }
 
             ++currentLineNumber;
