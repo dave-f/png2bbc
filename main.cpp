@@ -23,16 +23,17 @@ enum class PixelOrder : uint8_t
 
 void displayTitle()
 {
-    std::cout << "png2bbc (version " << versionString << ")" << std::endl << std::endl;
+    std::cout << "png2bbc (version " << versionString << ")" << std::endl;
 }
 
 void displayUsage()
 {
     std::cout << "A utility to create BBC micro sprites from PNG images" << std::endl << std::endl;
     std::cout << "Usage: " << std::endl;
-    std::cout << "        png2bbc [-l] <scriptfile>" << std::endl;
+    std::cout << "        png2bbc [-l | -i] <scriptfile>" << std::endl << std::endl;
     std::cout << "Options:" << std::endl;
-    std::cout << "        -l : List outputs from scriptfile, but do not generate them" << std::endl;
+    std::cout << "        -l : List outputs from script file (do not build anything)" << std::endl;
+    std::cout << "        -i : List inputs to script file (do not build anything)" << std::endl;
 }
 
 // Produce a block of data in character row format, useful for tiles
@@ -210,7 +211,7 @@ void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::sh
     outFile.close();
 }
 
-bool processScript(const std::string& filename, std::set<std::string>& outputs, bool buildFiles)
+bool processScript(const std::string& filename, std::set<std::string>& inputs, std::set<std::string>& outputs, bool buildFiles)
 {
     bool r(false);
     uint32_t currentLineNumber = 0;
@@ -306,6 +307,7 @@ bool processScript(const std::string& filename, std::set<std::string>& outputs, 
             else if (std::regex_match(currentLine,m,rxImageCommand))
             {
                 currentImage = std::make_shared<Image>(m[1].str());
+                inputs.insert(m[1].str());
             }
             else if (std::regex_match(currentLine,m,rxCreateCommand))
             {
@@ -435,8 +437,9 @@ int main(int argc, char** argv)
         std::string filename = argv[1];
         auto startTime = std::chrono::steady_clock::now();
         std::set<std::string> outputs;
+        std::set<std::string> inputs;
 
-        if (processScript(filename,outputs,true))
+        if (processScript(filename,inputs,outputs,true))
         {
             auto msTaken = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count();
             std::cout << outputs.size() << " file(s) created in " << msTaken << "ms" << std::endl;
@@ -444,36 +447,51 @@ int main(int argc, char** argv)
             return 0;
         }
     }
-    // With two arguments, we should be being asked to list outputs
+    // With two arguments, we should be being asked to list either inputs or outputs
     else if (argc == 3)
     {
+        enum class ListingType { Undefined, Inputs, Outputs };
         std::string filename;
         std::string argOne = argv[1];
         std::string argTwo = argv[2];
-        bool argOK = false;
+        ListingType argType = ListingType::Undefined;
 
-        if (argOne=="-l" || argOne=="-L")
+        if ((argOne == "-l" || argOne == "-L"))
         {
             filename = argTwo;
-            argOK = true;
+            argType = ListingType::Outputs;
         }
-        else if (argTwo == "-l" || argTwo=="-L")
+        else if ((argTwo == "-l" || argTwo == "-L"))
         {
             filename = argOne;
-            argOK = true;
+			argType = ListingType::Outputs;
+        }
+        else if ((argOne == "-i" || argOne=="-I"))
+        {
+            filename = argTwo;
+			argType = ListingType::Inputs;
+        }
+        else if ((argTwo == "-i" || argTwo == "-I"))
+        {
+			filename = argOne;
+			argType = ListingType::Inputs;
         }
 
-        if (argOK)
+        if (argType != ListingType::Undefined)
         {
+			std::set<std::string> inputs;
             std::set<std::string> outputs;
 
-            if (processScript(filename, outputs, false))
+            if (processScript(filename,inputs,outputs,false))
             {
-                for (const auto& i : outputs)
-                {
-                    std::cout << " " << i;
-                }
+                const auto& results = (argType == ListingType::Inputs) ? inputs : outputs;
+
+				for (const auto& i : results)
+				{
+					std::cout << " " << i;
+				}
             }
+
             std::cout << std::endl;
         }
         else
