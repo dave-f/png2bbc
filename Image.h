@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <stdexcept>
 
 #include "lodepng.h"
 #include "Colour.h"
@@ -16,7 +17,7 @@ public:
         }
     }
     Image() = delete;
-    ~Image() {}
+    ~Image() = default;
 
 public:
     Colour      getPixel(uint32_t x, uint32_t y) const;
