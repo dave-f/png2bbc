@@ -12,7 +12,7 @@
 #include "ScreenByte.h"
 
 // Build on g++ with -std=c++11
-static constexpr char versionString[] = "1.9";
+static constexpr char versionString[] = "1.10";
 
 enum class PixelOrder : uint8_t
 {
@@ -115,7 +115,7 @@ void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::sha
 }
 
 // Produce a block of data in line format, useful for sprites
-void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::shared_ptr<std::vector<Colour>> theColours, std::shared_ptr<std::map<uint32_t,uint8_t>> customColours, const std::string& binFile, bool appendMode, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numFrames, uint32_t numShifts)
+void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::shared_ptr<std::vector<Colour>> theColours, std::shared_ptr<std::map<uint32_t,uint8_t>> customColours, const std::string& binFile, bool appendMode, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t numShifts)
 {
     std::fstream outFile;
     ScreenByte currentByte(mode);
@@ -128,84 +128,80 @@ void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::sh
         throw std::runtime_error("Sprite width not a multiple of pixels per byte");
     }
 
-    for (uint32_t k = 0; k<numFrames; ++k)
+    for (uint32_t j = y; j < y + h; ++j)
     {
-        for (uint32_t j = y; j < y + h; ++j)
+        // If we are shifting, write extra black pixels into each row
+        ptrdiff_t blackPixelValue;
+
+        if (numShifts>0)
         {
-            // If we are shifting, write extra black pixels into each row
-            ptrdiff_t blackPixelValue;
+            auto it = std::find(theColours->begin(), theColours->end(), Colour::BBCColour::Black);
 
-            if (numShifts>0)
+            if (it == theColours->end())
             {
-                auto it = std::find(theColours->begin(), theColours->end(), Colour::BBCColour::Black);
+                throw std::runtime_error("No black colour found (needed for shifting)");
+            }
+            else
+            {
+                blackPixelValue = std::distance(theColours->begin(), it);
 
-                if (it == theColours->end())
+                for (uint32_t i=0; i<numShifts; ++i)
                 {
-                    throw std::runtime_error("No black colour found (needed for shifting)");
+                    currentByte.addPixel(blackPixelValue);
+                }
+            }
+        }
+
+        for (uint32_t i = x; i < x + w; ++i)
+        {
+            auto thisPixelRGB = theImage->getPixelRGB(i,j);
+
+            bool usingCustomColour = false;
+            ptrdiff_t s;
+
+            // Custom colours take precedence so look at these first
+            auto customIt = customColours->find(thisPixelRGB);
+
+            if (customIt != customColours->end())
+            {
+                s = customIt->second;
+                usingCustomColour = true;
+            }
+
+            if (!usingCustomColour)
+            {
+                Colour thisPixel(thisPixelRGB);
+
+                // The colour must be expected
+                auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
+
+                if (it != theColours->end())
+                {
+                    s = std::distance(theColours->begin(), it);
                 }
                 else
                 {
-                    blackPixelValue = std::distance(theColours->begin(), it);
-
-                    for (uint32_t i=0; i<numShifts; ++i)
-                    {
-                        currentByte.addPixel(blackPixelValue);
-                    }
+                    throw std::runtime_error("Unsupported colour");
                 }
             }
 
-            for (uint32_t i = x; i < x + w; ++i)
+            if (currentByte.addPixel(s))
             {
-                auto thisPixelRGB = theImage->getPixelRGB(i,j);
-
-                bool usingCustomColour = false;
-                ptrdiff_t s;
-
-                // Custom colours take precedence so look at these first
-                auto customIt = customColours->find(thisPixelRGB);
-
-                if (customIt != customColours->end())
-                {
-                    s = customIt->second;
-                    usingCustomColour = true;
-                }
-
-                if (!usingCustomColour)
-                {
-                    Colour thisPixel(thisPixelRGB);
-
-                    // The colour must be expected
-                    auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
-
-                    if (it != theColours->end())
-                    {
-                        s = std::distance(theColours->begin(), it);
-                    }
-                    else
-                    {
-                        throw std::runtime_error("Unsupported colour");
-                    }
-                }
-
-                if (currentByte.addPixel(s))
-                {
-                    auto theByte = currentByte.readByte();
-
-                    outFile.write(reinterpret_cast<const char*>(&theByte), 1);
-                }
-            }
-
-            // Check if theres any residual pixels to write
-            if ((numShifts > 0) && !currentByte.isEmpty())
-            {
-                while (!currentByte.addPixel(blackPixelValue))
-                    ;
-
                 auto theByte = currentByte.readByte();
-                outFile.write(reinterpret_cast<const char*>(&theByte),1);
+
+                outFile.write(reinterpret_cast<const char*>(&theByte), 1);
             }
         }
-        x += w;
+
+        // Check if theres any residual pixels to write
+        if ((numShifts > 0) && !currentByte.isEmpty())
+        {
+            while (!currentByte.addPixel(blackPixelValue))
+                ;
+
+            auto theByte = currentByte.readByte();
+            outFile.write(reinterpret_cast<const char*>(&theByte),1);
+        }
     }
 
     outFile.close();
@@ -374,17 +370,22 @@ bool processScript(const std::string& filename, std::set<std::string>& inputs, s
                 else if (currentPixelOrder == PixelOrder::PreshiftedLine)
                 {
                     auto ppb = Colour::getPixelsPerByteForMode(currentMode);
+					outputs.insert(outputFile);
 
-                    for (uint32_t i=0; i<ppb; ++i)
-                    {
-                        std::string thisOutputFile = outputFile + "_" + std::to_string(i);
-                        outputs.insert(thisOutputFile);
-
-                        if (buildFiles)
+					if (buildFiles)
+					{
+                        for (auto f = 0u; f < frames; ++f)
                         {
-                            processSprite(currentImage, currentMode, currentColours, customColours, thisOutputFile, appendMode, x, y, w, h, frames, i);
+                            for (uint32_t i = 0; i < ppb; ++i)
+                            {
+                                bool createNewFile = ((appendMode == false) && (i == 0) && (f == 0));
+
+                                processSprite(currentImage, currentMode, currentColours, customColours, outputFile, !createNewFile, x, y, w, h, i);
+                            }
+
+                            x += w;
                         }
-                    }
+					}
                 }
                 else
                 {
@@ -392,13 +393,21 @@ bool processScript(const std::string& filename, std::set<std::string>& inputs, s
 
                     if (buildFiles)
                     {
-                        processSprite(currentImage, currentMode, currentColours, customColours, outputFile, appendMode, x, y, w, h, frames, 0);
+                        for (auto f = 0u; f < frames; ++f)
+                        {
+							bool createNewFile = ((appendMode == false) && (f == 0));
+
+                            processSprite(currentImage, currentMode, currentColours, customColours, outputFile, !createNewFile, x, y, w, h, 0);
+
+                            x += w;
+                        }
                     }
                 }
 
                 if (buildFiles)
                 {
-                    std::cout << "Wrote " << frames << " sprite(s) (" << currentPixelOrderStr << " format) to " << outputFile << std::endl;
+                    std::string actionStr = appendMode ? "Added " : "Wrote ";
+                    std::cout << actionStr << frames << " sprite(s) (" << currentPixelOrderStr << ") to " << outputFile << std::endl;
                 }
             }
             else
