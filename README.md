@@ -45,7 +45,7 @@ CREATE-FILE <filename> FROM-DATA <x> <y> <w> <h> <number-frames> [DATA-ORDER <LI
 Creates sprite data using the current image, colours and mode.  There is a choice of data output formats:
 
 - Line. This is the default. Pixels are written out just as straight scanlines for normal sprite routines.
-- Preshifted. Pixels are written out as above, but preshifted copies are made which will insert the correct amount of empty pixels for the mode (e.g. in mode 5, 4 copies of the sprite are written out).  Files are output with a number on the end to indicate the amount the sprite is shifted by.
+- Preshifted. Pixels are written out as above, but preshifted copies are made which will insert the correct amount of empty (black) pixels for the mode (e.g. in mode 5, 4 copies of the sprite are written out - shifted by 0,1,2 and 3 pixels).
 - Block. Pixels are packed into bytes for the required mode, and written out in blocks of 8 down, then another block of 8.  This mimics the BBC Micro's character-based screen layout, so is handy for writing out graphics which are always drawn on character boundaries (e.g. tiles), or creating data which will be directly loaded to the screen.
 
 Instead of `CREATE-FILE` you can use `APPEND-FILE` which has the same syntax but appends data to a file rather than create a new one. This is useful if you want to keep graphics data together which are made from separate regions in the source image.
