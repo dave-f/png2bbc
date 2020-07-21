@@ -12,7 +12,7 @@
 #include "ScreenByte.h"
 
 // Build on g++ with -std=c++11
-static constexpr char versionString[] = "1.10";
+static constexpr char versionString[] = "1.11";
 
 enum class PixelOrder : uint8_t
 {
@@ -34,6 +34,35 @@ void displayUsage()
     std::cout << "Options:" << std::endl;
     std::cout << "        -l : List outputs from script file (do not build anything)" << std::endl;
     std::cout << "        -i : List inputs to script file (do not build anything)" << std::endl;
+}
+
+// Export a NuLA colour palette
+void processNulaPalette(const std::shared_ptr<Image> theImage, const std::string& binFile, bool appendMode, std::shared_ptr<std::map<uint32_t, uint8_t>> customColours, uint32_t x, uint32_t y)
+{
+    std::fstream outFile;
+
+    outFile.exceptions(std::fstream::failbit | std::fstream::badbit);
+    outFile.open(binFile, appendMode ? (std::ios::app | std::ios::binary) : (std::ios::out | std::ios::binary));
+
+    customColours->clear();
+
+    for (auto i = 0; i < 16; ++i)
+    {
+        auto pixel = theImage->getPixelRGB(x+i, y);
+
+        uint8_t red = pixel >> 16;
+        uint8_t green = (pixel >> 8) & 0xff;
+        uint8_t blue = pixel & 0xff;
+        uint8_t firstByte = (i << 4) | static_cast<uint8_t>((red / 255.0) * 15);
+        uint8_t secondByte = static_cast<uint8_t>((green / 255.0) * 15) << 4 | static_cast<uint8_t>((blue / 255.0) * 15);
+
+        (*customColours)[pixel] = i;
+
+        outFile.write(reinterpret_cast<const char*>(&firstByte), 1);
+        outFile.write(reinterpret_cast<const char*>(&secondByte), 1);
+    }
+
+    outFile.close();
 }
 
 // Produce a block of data in character row format, useful for tiles
@@ -228,6 +257,7 @@ bool processScript(const std::string& filename, std::set<std::string>& inputs, s
         int8_t currentMode(-1);
         std::shared_ptr<std::vector<Colour>> currentColours = std::make_shared<std::vector<Colour>>();
         std::shared_ptr<std::map<uint32_t,uint8_t>> customColours = std::make_shared<std::map<uint32_t, uint8_t>>();
+        std::shared_ptr<std::vector<Colour>> nulaColours = std::make_shared<std::vector<Colour>>();
         PixelOrder currentPixelOrder;
         std::string currentPixelOrderStr;
 
@@ -243,6 +273,8 @@ bool processScript(const std::string& filename, std::set<std::string>& inputs, s
         std::regex rxCreateCommand(R"([[:space:]]*(CREATE-FILE|APPEND-FILE)[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)([[:space:]]+DATA-ORDER[[:space:]]+(BLOCK|LINE|PRESHIFTED))?.*)",std::regex_constants::icase);
         // CUSTOM-COLOUR <hex-colour> <colour number>
         std::regex rxCustomColourCommand(R"([[:space:]]*CUSTOM-COLOUR[[:space:]]+([[:xdigit:]]{6})[[:space:]]+([0-9]{1,2}).*)");
+        // CREATE-NULA-PALETTE / APPEND-NULA-PALETTE <filename> FROM-DATA <x> <y>
+        std::regex rxCreateNulaPaletteCommand(R"([[:space:]]*(CREATE-NULA-PALETTE|APPEND-NULA-PALETTE)[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA[[:space:]]+([0-9]+)[[:space:]]+([0-9]+).*)");
 
         auto delim = (char) 0xa;
         auto carriageReturn = (char) 0xd;
@@ -304,6 +336,24 @@ bool processScript(const std::string& filename, std::set<std::string>& inputs, s
             {
                 currentImage = std::make_shared<Image>(m[1].str());
                 inputs.insert(m[1].str());
+            }
+            else if (std::regex_match(currentLine, m, rxCreateNulaPaletteCommand))
+            {
+                outputs.insert(m[2].str());
+
+                if (buildFiles)
+                {
+                    std::string createModeStr = m[1].str();
+                    bool appendMode = createModeStr == "APPEND-NULA-PALETTE";
+                    auto outputFile = m[2].str();
+                    uint32_t x = std::stoi(m[3].str());
+                    uint32_t y = std::stoi(m[4].str());
+
+                    processNulaPalette(currentImage, outputFile, appendMode, customColours, x, y);
+                    
+                    std::string actionStr = appendMode ? "Added " : "Wrote ";
+                    std::cout << actionStr << "NuLA palette to " << outputFile << std::endl;
+                }
             }
             else if (std::regex_match(currentLine,m,rxCreateCommand))
             {
