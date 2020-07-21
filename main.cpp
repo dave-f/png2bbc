@@ -37,7 +37,7 @@ void displayUsage()
 }
 
 // Export a NuLA colour palette
-void processNulaPalette(const std::shared_ptr<Image> theImage, const std::string& binFile, bool appendMode, std::shared_ptr<std::map<uint32_t, uint8_t>> customColours, uint32_t x, uint32_t y)
+void processNulaPalette(const std::shared_ptr<Image> theImage, const std::string& binFile, bool appendMode, std::shared_ptr<std::map<uint32_t, uint8_t>> customColours, uint32_t x, uint32_t y, uint32_t count)
 {
     std::fstream outFile;
 
@@ -46,7 +46,7 @@ void processNulaPalette(const std::shared_ptr<Image> theImage, const std::string
 
     customColours->clear();
 
-    for (auto i = 0; i < 16; ++i)
+    for (auto i = 0u; i < count; ++i)
     {
         auto pixel = theImage->getPixelRGB(x+i, y);
 
@@ -273,8 +273,8 @@ bool processScript(const std::string& filename, std::set<std::string>& inputs, s
         std::regex rxCreateCommand(R"([[:space:]]*(CREATE-FILE|APPEND-FILE)[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)([[:space:]]+DATA-ORDER[[:space:]]+(BLOCK|LINE|PRESHIFTED))?.*)",std::regex_constants::icase);
         // CUSTOM-COLOUR <hex-colour> <colour number>
         std::regex rxCustomColourCommand(R"([[:space:]]*CUSTOM-COLOUR[[:space:]]+([[:xdigit:]]{6})[[:space:]]+([0-9]{1,2}).*)");
-        // CREATE-NULA-PALETTE / APPEND-NULA-PALETTE <filename> FROM-DATA <x> <y>
-        std::regex rxCreateNulaPaletteCommand(R"([[:space:]]*(CREATE-NULA-PALETTE|APPEND-NULA-PALETTE)[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA[[:space:]]+([0-9]+)[[:space:]]+([0-9]+).*)");
+        // CREATE-NULA-PALETTE / APPEND-NULA-PALETTE <filename> FROM-DATA <x> <y> COUNT <n>
+        std::regex rxCreateNulaPaletteCommand(R"([[:space:]]*(CREATE-NULA-PALETTE|APPEND-NULA-PALETTE)[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+COUNT[[:space:]]+([0-9]+).*)");
 
         auto delim = (char) 0xa;
         auto carriageReturn = (char) 0xd;
@@ -348,8 +348,9 @@ bool processScript(const std::string& filename, std::set<std::string>& inputs, s
                     auto outputFile = m[2].str();
                     uint32_t x = std::stoi(m[3].str());
                     uint32_t y = std::stoi(m[4].str());
+                    uint32_t count = std::stoi(m[5].str());
 
-                    processNulaPalette(currentImage, outputFile, appendMode, customColours, x, y);
+                    processNulaPalette(currentImage, outputFile, appendMode, customColours, x, y, count);
                     
                     std::string actionStr = appendMode ? "Added " : "Wrote ";
                     std::cout << actionStr << "NuLA palette to " << outputFile << std::endl;
