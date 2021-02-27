@@ -40,6 +40,13 @@ Overrides any colour.  This is useful if you have special RGB values in your sou
 ---
 
 ````
+CUSTOM-NULA-COLOURS <x> <y> <n> [FILE <filename>]
+````
+Creates a NuLA palette of `n` colours from pixels in the image, optionally writing out to `filename`.  NuLA colours are stored internally as "custom" colours, and the pixels in the source image should be stored horizontally.
+
+---
+
+````
 CREATE-FILE <filename> FROM-DATA <x> <y> <w> <h> <number-frames> [DATA-ORDER <LINE|PRESHIFTED|BLOCK>]
 ````
 Creates sprite data using the current image, colours and mode.  There is a choice of data output formats:
