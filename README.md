@@ -5,7 +5,7 @@ No external dependencies are required, just a C++11 compiler.  Tested on gcc ver
 
 The program reads in a script which defines what output files to create and how to create them.  With the `-l` switch, `png2bbc` will just list these output files without making them, and with the `-i` switch it will list the source png files referenced from the script.  These options are so you can easily include dependencies in your makefile.
 
-The script is built up of 5 very simple commands, which are detailed below.  Any lines starting with a `;` are considered comments.
+The script is built up of very simple commands, which are detailed below.  Any lines starting with a `;` are considered comments.
 
 ---
 
