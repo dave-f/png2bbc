@@ -40,9 +40,9 @@ Overrides any colour.  This is useful if you have special RGB values in your sou
 ---
 
 ````
-CUSTOM-NULA-COLOURS <x> <y> <n> [FILE <filename>]
+CUSTOM-NULA-COLOURS <x> <y> <n> <step> [FILE <filename>]
 ````
-Creates a NuLA palette of `n` colours from pixels in the image, optionally writing out to `filename`.  NuLA colours are stored internally as "custom" colours, and the pixels in the source image should be stored horizontally.
+Creates a NuLA palette of `n` colours from pixels in the image, optionally writing out to `filename`.  NuLA colours are stored internally as "custom" colours, and the pixels in the source image should be stored horizontally.  The `step` parameter specifies the size in pixels of each palette entry, so you can work with larger palettes on the source PNG.
 
 ---
 

@@ -37,7 +37,7 @@ void displayUsage()
 }
 
 // Export a NuLA colour palette
-void processNulaPalette(const std::shared_ptr<Image> theImage, const std::string& binFile, bool appendMode, std::shared_ptr<std::map<uint32_t, uint8_t>> customColours, uint32_t x, uint32_t y, uint32_t count)
+void processNulaPalette(const std::shared_ptr<Image> theImage, const std::string& binFile, bool appendMode, std::shared_ptr<std::map<uint32_t, uint8_t>> customColours, uint32_t x, uint32_t y, uint32_t count, uint32_t step)
 {
     std::fstream outFile;
     bool usingFile = !binFile.empty();
@@ -48,11 +48,10 @@ void processNulaPalette(const std::shared_ptr<Image> theImage, const std::string
 		outFile.open(binFile, appendMode ? (std::ios::app | std::ios::binary) : (std::ios::out | std::ios::binary));
 	}
 
-    //customColours->clear();
-
     for (auto i = 0u; i < count; ++i)
     {
-        auto pixel = theImage->getPixelRGB(x+i, y);
+        auto thisX = x + (i * step);
+        auto pixel = theImage->getPixelRGB(thisX, y);
 
         uint8_t red = pixel >> 16;
         uint8_t green = (pixel >> 8) & 0xff;
@@ -282,8 +281,8 @@ bool processScript(const std::string& filename, std::set<std::string>& inputs, s
         std::regex rxCreateCommand(R"([[:space:]]*(CREATE-FILE|APPEND-FILE)[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)([[:space:]]+DATA-ORDER[[:space:]]+(BLOCK|LINE|PRESHIFTED))?.*)",std::regex_constants::icase);
         // CUSTOM-COLOUR <hex-colour> <colour number>
         std::regex rxCustomColourCommand(R"([[:space:]]*CUSTOM-COLOUR[[:space:]]+([[:xdigit:]]{6})[[:space:]]+([0-9]{1,2}).*)");
-        // CUSTOM-NULA-COLOURS <x> <y> <n> [FILE <filename>] 
-        std::regex rxCustomNulaColourCommand(R"([[:space:]]*CUSTOM-NULA-COLOURS[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+(FILE[[:space:]]+(.*))?)");
+        // CUSTOM-NULA-COLOURS <x> <y> <n> <s> [FILE <filename>] 
+        std::regex rxCustomNulaColourCommand(R"([[:space:]]*CUSTOM-NULA-COLOURS[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+(FILE[[:space:]]+(.*))?)");
 
         auto delim = (char) 0xa;
         auto carriageReturn = (char) 0xd;
@@ -350,9 +349,9 @@ bool processScript(const std::string& filename, std::set<std::string>& inputs, s
             {
                 std::string paletteFile;
 
-                if (m[4].matched && !m[5].str().empty())
+                if (m[5].matched && !m[6].str().empty())
 				{
-                    paletteFile = m[5].str();
+                    paletteFile = m[6].str();
 					outputs.insert(paletteFile);
 				}
 
@@ -361,8 +360,9 @@ bool processScript(const std::string& filename, std::set<std::string>& inputs, s
                     uint32_t x = std::stoi(m[1].str());
                     uint32_t y = std::stoi(m[2].str());
                     uint32_t count = std::stoi(m[3].str());
+                    uint32_t step = std::stoi(m[4].str());
 
-                    processNulaPalette(currentImage, paletteFile, false, customColours, x, y, count);
+                    processNulaPalette(currentImage, paletteFile, false, customColours, x, y, count, step);
                     
                     if (!paletteFile.empty())
 					{
