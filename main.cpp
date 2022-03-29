@@ -12,7 +12,7 @@
 #include "ScreenByte.h"
 
 // Build on g++ with -std=c++11
-static constexpr char versionString[] = "1.11";
+static constexpr char versionString[] = "1.12";
 
 enum class PixelOrder : uint8_t
 {
