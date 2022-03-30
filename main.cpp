@@ -108,7 +108,9 @@ void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::sha
                 {
                     for (uint32_t m = 0; m<ppb; ++m)
                     {
-                        auto thisPixelRGB = theImage->getPixelRGB(x + (i*ppb) + m, y + (j * 8) + n);
+						auto thisPixelX = x + (i * ppb) + m;
+                        auto thisPixelY = y + (j * 8) + n;
+                        auto thisPixelRGB = theImage->getPixelRGB(thisPixelX, thisPixelY);
 
                         bool usingCustomColour = false;
                         ptrdiff_t s;
@@ -124,18 +126,32 @@ void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::sha
 
                         if (!usingCustomColour)
                         {
-                            Colour thisPixel(thisPixelRGB);
+                            try
+							{
+								Colour thisPixel(thisPixelRGB);
 
-                            auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
+                                auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
 
-                            if (it != theColours->end())
-                            {
-                                s = std::distance(theColours->begin(), it);
-                            }
-                            else
-                            {
-                                throw std::runtime_error("Unsupported colour");
-                            }
+                                if (it != theColours->end())
+                                {
+                                    s = std::distance(theColours->begin(), it);
+                                }
+                                else
+                                {
+                                    throw std::runtime_error("Unsupported colour");
+                                }
+							}
+							catch (const std::exception& e)
+							{
+								std::string errorMsg = e.what();
+                                errorMsg += " (";
+								errorMsg += std::to_string(thisPixelX);
+								errorMsg += ",";
+								errorMsg += std::to_string(thisPixelY);
+                                errorMsg += ")";
+
+								throw std::runtime_error(errorMsg);
+							}
                         }
 
                         if (currentByte.addPixel(s))
@@ -208,19 +224,33 @@ void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::sh
 
             if (!usingCustomColour)
             {
-                Colour thisPixel(thisPixelRGB);
+                try
+				{
+					Colour thisPixel(thisPixelRGB);
 
-                // The colour must be expected
-                auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
+					// The colour must be expected
+					auto it = std::find(theColours->begin(), theColours->end(), thisPixel);
 
-                if (it != theColours->end())
-                {
-                    s = std::distance(theColours->begin(), it);
-                }
-                else
-                {
-                    throw std::runtime_error("Unsupported colour");
-                }
+					if (it != theColours->end())
+					{
+						s = std::distance(theColours->begin(), it);
+					}
+					else
+					{
+						throw std::runtime_error("Unsupported colour");
+					}
+				}
+				catch (const std::exception& e)
+				{
+					std::string errorMsg = e.what();
+					errorMsg += " (";
+					errorMsg += std::to_string(i);
+					errorMsg += ",";
+					errorMsg += std::to_string(j);
+					errorMsg += ")";
+
+					throw std::runtime_error(errorMsg);
+				}
             }
 
             if (currentByte.addPixel(s))
