@@ -59,6 +59,11 @@ void processNulaPalette(const std::shared_ptr<Image> theImage, const std::string
         uint8_t firstByte = (i << 4) | static_cast<uint8_t>((red / 255.0) * 15);
         uint8_t secondByte = static_cast<uint8_t>((green / 255.0) * 15) << 4 | static_cast<uint8_t>((blue / 255.0) * 15);
 
+        if (customColours->count(pixel) != 0)
+        {
+            throw std::runtime_error("Custom colour already exists");
+        }
+
         (*customColours)[pixel] = i;
 
         if (usingFile)
