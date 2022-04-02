@@ -28,7 +28,7 @@ COLOURS <colour> <colour> ..
 ````
 Specifies the colours.  Use standard BBC Micro colours, i.e. BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN and WHITE.
 
-Ordering is important here; colours found in the image will be mapped to pixel values corresponding to their order in this list.  For example, if RED is the second item in the list, any red found in the image will be written as pixel value 2 (actually 1, since it's  zero-based).
+Ordering is important here; colours found in the image will be mapped to pixel values corresponding to their order in this list.  For example, if RED is the second item in the list, any red found in the image will be written as pixel value 2 (actually 1, since it's zero-based).
 
 ---
 
@@ -40,9 +40,9 @@ Overrides any colour.  This is useful if you have special RGB values in your sou
 ---
 
 ````
-CUSTOM-NULA-COLOURS <x> <y> <n> <step> [FILE <filename>]
+CUSTOM-NULA-COLOURS <x> <y> <n> <step> [start-index] [FILE <filename>]
 ````
-Creates a NuLA palette of `n` colours from pixels in the image, optionally writing out to `filename`.  NuLA colours are stored internally as "custom" colours, and the pixels in the source image should be stored horizontally.  The `step` parameter specifies the size in pixels of each palette entry, so you can work with larger palettes on the source PNG.
+Creates a NuLA palette of `n` colours from pixels in the image, optionally writing out to `filename`.  NuLA colours are stored internally as "custom" colours, and the pixels in the source image should be stored horizontally.  The `step` parameter specifies the size in pixels of each palette entry, so you can work with larger palettes on the source PNG. The optional parameter `start-index` starts the indexing from a specific value.
 
 ---
 

@@ -37,7 +37,7 @@ void displayUsage()
 }
 
 // Export a NuLA colour palette
-void processNulaPalette(const std::shared_ptr<Image> theImage, const std::string& binFile, bool appendMode, std::shared_ptr<std::map<uint32_t, uint8_t>> customColours, uint32_t x, uint32_t y, uint32_t count, uint32_t step)
+void processNulaPalette(const std::shared_ptr<Image> theImage, const std::string& binFile, bool appendMode, std::shared_ptr<std::map<uint32_t, uint8_t>> customColours, uint32_t x, uint32_t y, uint32_t count, uint32_t step, uint32_t startIndex)
 {
     std::fstream outFile;
     bool usingFile = !binFile.empty();
@@ -56,7 +56,7 @@ void processNulaPalette(const std::shared_ptr<Image> theImage, const std::string
         uint8_t red = pixel >> 16;
         uint8_t green = (pixel >> 8) & 0xff;
         uint8_t blue = pixel & 0xff;
-        uint8_t firstByte = (i << 4) | static_cast<uint8_t>((red / 255.0) * 15);
+        uint8_t firstByte = ((i+startIndex) << 4) | static_cast<uint8_t>((red / 255.0) * 15);
         uint8_t secondByte = static_cast<uint8_t>((green / 255.0) * 15) << 4 | static_cast<uint8_t>((blue / 255.0) * 15);
 
         if (customColours->count(pixel) != 0)
@@ -64,7 +64,7 @@ void processNulaPalette(const std::shared_ptr<Image> theImage, const std::string
             throw std::runtime_error("Custom colour already exists");
         }
 
-        (*customColours)[pixel] = i;
+        (*customColours)[pixel] = i+startIndex;
 
         if (usingFile)
 		{
@@ -314,10 +314,10 @@ bool processScript(const std::string& filename, std::set<std::string>& inputs, s
         std::regex rxImageCommand(R"([[:space:]]*IMAGE[[:space:]]+([^[:space:]]+).*)",std::regex_constants::icase);
         // CREATE-FILE / APPEND-FILE <filename> FROM-DATA <x> <y> <w> <h> <num-frames> [DATA-ORDER <BLOCK | LINE | PRESHIFTED>]
         std::regex rxCreateCommand(R"([[:space:]]*(CREATE-FILE|APPEND-FILE)[[:space:]]+([^[:space:]]+)[[:space:]]+FROM-DATA[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)([[:space:]]+DATA-ORDER[[:space:]]+(BLOCK|LINE|PRESHIFTED))?.*)",std::regex_constants::icase);
-        // CUSTOM-COLOUR <hex-colour> <colour number>
-        std::regex rxCustomColourCommand(R"([[:space:]]*CUSTOM-COLOUR[[:space:]]+([[:xdigit:]]{6})[[:space:]]+([0-9]{1,2}).*)");
-        // CUSTOM-NULA-COLOURS <x> <y> <n> <s> [FILE <filename>] 
-        std::regex rxCustomNulaColourCommand(R"([[:space:]]*CUSTOM-NULA-COLOURS[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+(FILE[[:space:]]+(.*))?)");
+        // CUSTOM-COLOUR <hex-colour> <colour-number>
+        std::regex rxCustomColourCommand(R"([[:space:]]*CUSTOM-COLOUR[[:space:]]+([[:xdigit:]]{6})[[:space:]]+([0-9]{1,2}).*)",std::regex_constants::icase);
+        // CUSTOM-NULA-COLOURS <x> <y> <number> <step> [start-index] [FILE <filename>] 
+        std::regex rxCustomNulaColourCommand(R"([[:space:]]*CUSTOM-NULA-COLOURS[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)[[:space:]]+([0-9]+)([[:space:]]+([0-9]+))([[:space:]]+([0-9]+))?([[:space:]]+FILE[[:space:]]+(.*))?.*)",std::regex_constants::icase);
 
         auto delim = (char) 0xa;
         auto carriageReturn = (char) 0xd;
@@ -384,9 +384,9 @@ bool processScript(const std::string& filename, std::set<std::string>& inputs, s
             {
                 std::string paletteFile;
 
-                if (m[5].matched && !m[6].str().empty())
+                if (m[8].matched && !m[9].str().empty())
 				{
-                    paletteFile = m[6].str();
+                    paletteFile = m[9].str();
 					outputs.insert(paletteFile);
 				}
 
@@ -396,8 +396,9 @@ bool processScript(const std::string& filename, std::set<std::string>& inputs, s
                     uint32_t y = std::stoi(m[2].str());
                     uint32_t count = std::stoi(m[3].str());
                     uint32_t step = std::stoi(m[4].str());
+                    uint32_t startIndex = m[6].matched ? std::stoi(m[7].str()) : 0;
 
-                    processNulaPalette(currentImage, paletteFile, false, customColours, x, y, count, step);
+                    processNulaPalette(currentImage, paletteFile, false, customColours, x, y, count, step, startIndex);
                     
                     if (!paletteFile.empty())
 					{
