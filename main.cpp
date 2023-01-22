@@ -100,6 +100,16 @@ void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::sha
         throw std::runtime_error("Block height not a multiple of eight");
     }
 
+	if ((x + w) > theImage->getWidth())
+	{
+		throw std::runtime_error("Sprite bounds are outside the image");
+	}
+
+	if ((y + h) > theImage->getHeight())
+	{
+		throw std::runtime_error("Sprite bounds are outside the image");
+	}
+
     auto blocksX  = w / ppb;
     auto blocksY  = h / 8;
 
@@ -185,6 +195,16 @@ void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::sh
     if ( (w % currentByte.getPixelsPerByte()) != 0 )
     {
         throw std::runtime_error("Sprite width not a multiple of pixels per byte");
+    }
+
+    if ((x + w) > theImage->getWidth())
+    {
+		throw std::runtime_error("Sprite bounds are outside the image");
+    }
+
+    if ((y + h) > theImage->getHeight())
+    {
+		throw std::runtime_error("Sprite bounds are outside the image");
     }
 
     for (uint32_t j = y; j < y + h; ++j)
