@@ -286,7 +286,7 @@ void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::sh
             }
         }
 
-        // Check if theres any residual pixels to write
+        // Check if there's any residual pixels to write
         if ((numShifts > 0) && !currentByte.isEmpty())
         {
             while (!currentByte.addPixel(blackPixelValue))
