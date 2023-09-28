@@ -7,7 +7,7 @@
 class ScreenByte
 {
 public:
-    ScreenByte(uint32_t mode) : m_mode(mode),m_byte(0),m_offset(0) {}
+    ScreenByte(uint32_t mode) : m_byte(0),m_offset(0),m_mode(mode) {}
     ScreenByte() = delete;
     ~ScreenByte() {}
 
