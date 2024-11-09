@@ -230,6 +230,11 @@ void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::sh
                 }
             }
         }
+        else
+        {
+            // In this case 'blackPixelValue' won't be used but it stops the compiler from warning
+            blackPixelValue = 0;
+        }
 
         for (uint32_t i = x; i < x + w; ++i)
         {
