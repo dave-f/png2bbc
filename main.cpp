@@ -45,7 +45,15 @@ void processNulaPalette(const std::shared_ptr<Image> theImage, const std::string
     if (usingFile)
 	{
 		outFile.exceptions(std::fstream::failbit | std::fstream::badbit);
-		outFile.open(binFile, appendMode ? (std::ios::app | std::ios::binary) : (std::ios::out | std::ios::binary));
+		try
+		{
+			outFile.open(binFile, appendMode ? (std::ios::app | std::ios::binary) : (std::ios::out | std::ios::binary));
+		}
+		catch (const std::exception& e)
+		{
+			std::string msg = "Problem creating file " + binFile + " (does the directory exist?)";
+			throw std::runtime_error(msg);
+		}
 	}
 
     for (auto i = 0u; i < count; ++i)
@@ -86,7 +94,15 @@ void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::sha
     ScreenByte currentByte(mode);
     
     outFile.exceptions(std::fstream::failbit | std::fstream::badbit);
-    outFile.open(binFile, appendMode ? (std::ios::app | std::ios::binary) : (std::ios::out | std::ios::binary));
+    try
+    {
+        outFile.open(binFile, appendMode ? (std::ios::app | std::ios::binary) : (std::ios::out | std::ios::binary));
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "Problem creating file " + binFile + " (does the directory exist?)";
+        throw std::runtime_error(msg);
+    }
 
     auto ppb = currentByte.getPixelsPerByte();
 
