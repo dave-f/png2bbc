@@ -51,7 +51,7 @@ void processNulaPalette(const std::shared_ptr<Image> theImage, const std::string
 		}
 		catch (const std::exception& e)
 		{
-			std::string msg = "Problem creating file " + binFile + " (does the directory exist?)";
+			std::string msg = "Problem opening file " + binFile + " (does the directory exist?)";
 			throw std::runtime_error(msg);
 		}
 	}
@@ -100,7 +100,7 @@ void processBlock(const std::shared_ptr<Image> theImage, uint32_t mode, std::sha
     }
     catch (const std::exception& e)
     {
-        std::string msg = "Problem creating file " + binFile + " (does the directory exist?)";
+        std::string msg = "Problem opening file " + binFile + " (does the directory exist?)";
         throw std::runtime_error(msg);
     }
 
@@ -213,7 +213,7 @@ void processSprite(const std::shared_ptr<Image> theImage, uint32_t mode, std::sh
     }
     catch (const std::exception&)
     {
-        std::string msg = "Problem creating file " + binFile + " (does the directory exist?)";
+        std::string msg = "Problem opening file " + binFile + " (does the directory exist?)";
         throw std::runtime_error(msg);
     }
 
